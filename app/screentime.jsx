@@ -1,9 +1,9 @@
 import { View, Text } from "react-native";
 
-export default function Welcome() {
+export default function Screentime() {
   return (
     <View>
-      <Text>Welcome Screen</Text>
+      <Text>Screentime</Text>
     </View>
   );
 }
