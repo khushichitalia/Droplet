@@ -1,14 +1,15 @@
-import { StyleSheet, Text, View } from 'react-native'
-import React from 'react'
+import React from 'react';
+import LoginScreen from './login';
 
-const Home = () => {
-  return (
-    <View>
-      <Text>Home</Text>
-    </View>
-  )
+export default function App() {
+  return <LoginScreen />;
 }
 
-export default Home
+// Uncomment to see homepage:
 
-const styles = StyleSheet.create({})
+// import React from 'react';
+// import HomePage from './homepage';
+
+// export default function App() {
+//   return <HomePage />;
+// }
