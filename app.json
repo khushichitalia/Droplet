@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "hydration_tracker_app",
-    "slug": "droplet",
+    "name": "Droplet",
+    "slug": "hydration_tracker_app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
