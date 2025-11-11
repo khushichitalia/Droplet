@@ -41,6 +41,10 @@ export default function Layout() {
             borderTopWidth: 0,
             paddingBottom: 10,
           },
+          tabBarItemStyle: {
+            justifyContent: "center",
+            alignItems: "center",
+          },
         }}
       >
         <Tabs.Screen
