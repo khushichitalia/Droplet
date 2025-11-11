@@ -1,11 +1,13 @@
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { Image, View, Text, StyleSheet } from "react-native";
 
 export default function HomePage() {
   return (
     <View style={styles.container}>
-      {/* Settings Placeholder */}
-      <View style={styles.gearPlaceholder} />
+      <Image
+        source={require("../../assets/setting.png")}
+        style={styles.gearIcon}
+      />
 
       {/* Welcome Box */}
       <View style={styles.welcomeBox}>
@@ -14,9 +16,15 @@ export default function HomePage() {
         <Text style={styles.amount}>______ oz of water!</Text>
       </View>
 
-      {/* Water Drop Placeholder */}
-      <View style={styles.dropletPlaceholder}>
-        <Text style={styles.dropGoalText}>Goal: ____ oz</Text>
+      {/* Water Drop with Centered Text */}
+      <View style={styles.dropletContainer}>
+        <Image
+          source={require("../../assets/waterdrop.png")}
+          style={styles.droplet}
+        />
+        <View style={styles.dropTextContainer}>
+          <Text style={styles.dropGoalText}>Goal: ____ oz</Text>
+        </View>
       </View>
     </View>
   );
@@ -80,8 +88,37 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
 
+  gearIcon: {
+    position: "absolute",
+    top: 40,
+    right: 30,
+    width: 50,
+    height: 50,
+    resizeMode: "contain",
+  },
+
+  dropletContainer: {
+    position: "relative",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  dropTextContainer: {
+    position: "absolute",
+    top: "55%",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
   dropGoalText: {
     fontSize: 20,
     color: "#FFFFFF",
+  },
+
+  droplet: {
+    marginTop: 20,
+    width: 240,
+    height: 320,
+    resizeMode: "contain",
   },
 });

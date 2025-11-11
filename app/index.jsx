@@ -34,6 +34,11 @@ export default function LoginScreen({ navigation }) {
 
       {/* Username Field */}
       <View style={styles.inputContainer}>
+        <Image
+          source={require("../assets/User.png")}
+          style={styles.icon}
+          resizeMode="contain"
+        />
         <TextInput
           style={styles.input}
           placeholder="Username"
@@ -45,6 +50,11 @@ export default function LoginScreen({ navigation }) {
 
       {/* Password Field */}
       <View style={styles.inputContainer}>
+        <Image
+          source={require("../assets/Lock.png")}
+          style={styles.icon}
+          resizeMode="contain"
+        />
         <TextInput
           style={styles.input}
           placeholder="Password"
@@ -114,21 +124,21 @@ export default function LoginScreen({ navigation }) {
       />
 
       {/* Waves */}
-      {/* <Image
-        source={require('assets/Vector1.png')}
+      <Image
+        source={require("../assets/Vector1.png")}
         style={[styles.waveImage, { bottom: 20, height: 160, zIndex: 1 }]}
         resizeMode="cover"
       />
       <Image
-        source={require('assets/Vector2.png')}
+        source={require("../assets/Vector2.png")}
         style={[styles.waveImage, { bottom: 45, zIndex: 2 }]}
         resizeMode="cover"
       />
       <Image
-        source={require('assets/Vector3.png')}
+        source={require("../assets/Vector3.png")}
         style={[styles.waveImage, { bottom: -30, zIndex: 3 }]}
         resizeMode="cover"
-      /> */}
+      />
     </View>
   );
 }
