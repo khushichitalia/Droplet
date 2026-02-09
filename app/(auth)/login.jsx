@@ -1,5 +1,7 @@
 import { router } from "expo-router";
 import React, { useState } from "react";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "../../lib/firebase";
 import {
   View,
   Text,
@@ -10,22 +12,19 @@ import {
 } from "react-native";
 
 export default function LoginScreen({ navigation }) {
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleLogin = () => {
-    // bypass authentication (for now)
-    router.replace("/tabs/homepage");
-    // if (username && password) {
-    //   alert('Login successful!'); // temporary behavior
-    // // later: navigation.navigate('Home');
-    // } else {
-    //   alert('Please enter both fields');
-    // }
+  const handleLogin = async () => {
+    try {
+      await signInWithEmailAndPassword(auth, email.trim(), password);
+      router.replace("/tabs/homepage");
+    } catch (error) {
+      alert(error.message);
+    }
   };
 
   const handleForgotPassword = () => {
-    // alert("Password reset link sent!"); // Placeholder — later connect to Firebase reset
     router.push("/(auth)/forgot-password");
   };
 
@@ -35,9 +34,9 @@ export default function LoginScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Log in</Text>
+      <Text style={styles.title}>Log In</Text>
 
-      {/* username field */}
+      {/* email field */}
       <View style={styles.inputContainer}>
         <Image
           source={require("../../assets/User.png")}
@@ -46,10 +45,10 @@ export default function LoginScreen({ navigation }) {
         />
         <TextInput
           style={styles.input}
-          placeholder="Username"
+          placeholder="Email"
           placeholderTextColor="#CAF0F8"
-          value={username}
-          onChangeText={setUsername}
+          value={email}
+          onChangeText={setEmail}
         />
       </View>
 
@@ -78,13 +77,17 @@ export default function LoginScreen({ navigation }) {
         <Text style={styles.forgotText}>Forgot Password?</Text>
       </TouchableOpacity>
 
-      {/* sign in button */}
+      {/* log in button */}
       <TouchableOpacity style={styles.button} onPress={handleLogin}>
-        <Text style={styles.buttonText}>Sign in</Text>
+        <Text style={styles.buttonText}>Log In</Text>
       </TouchableOpacity>
 
       <Text style={styles.link}>
-        No Account? <Text style={styles.signUp}>Sign up</Text> Now!
+        No Account?{" "}
+        <Text style={styles.signUp} onPress={handleSignup}>
+          Sign up
+        </Text>{" "}
+        Now!
       </Text>
 
       {/* bubbles */}

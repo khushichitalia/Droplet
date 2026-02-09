@@ -1,7 +1,50 @@
-import React from "react";
-import { Image, View, Text, StyleSheet } from "react-native";
+import React, { useState, useEffect } from "react";
+import { auth } from "../../lib/firebase";
+import { updateProfile } from "firebase/auth";
+import {
+  Image,
+  View,
+  Text,
+  StyleSheet,
+  Modal,
+  TextInput,
+  TouchableOpacity,
+} from "react-native";
 
 export default function HomePage() {
+  const [showNameModal, setShowNameModal] = useState(false);
+  const [name, setName] = useState("");
+  const [displayName, setDisplayName] = useState(
+    auth.currentUser?.displayName ?? "",
+  );
+
+  useEffect(() => {
+    if (auth.currentUser && !auth.currentUser.displayName) {
+      setShowNameModal(true);
+    }
+  }, []);
+
+  const saveName = async () => {
+    if (!name.trim()) {
+      alert("Please enter a name!");
+      return;
+    }
+
+    try {
+      await updateProfile(auth.currentUser, { displayName: name.trim() });
+      setDisplayName(name.trim());
+      setShowNameModal(false);
+    } catch (error) {
+      alert(error.message);
+    }
+  };
+
+  let greeting = "Welcome!";
+
+  if (displayName) {
+    greeting = `Hello, ${displayName}!`;
+  }
+
   return (
     <View style={styles.container}>
       <Image
@@ -9,14 +52,14 @@ export default function HomePage() {
         style={styles.gearIcon}
       />
 
-      {/* Welcome Box */}
+      {/* welcome */}
       <View style={styles.welcomeBox}>
-        <Text style={styles.welcomeTitle}>Welcome back ____!</Text>
+        <Text style={styles.welcomeTitle}>{greeting}</Text>
         <Text style={styles.welcomeSubtitle}>Today you drank</Text>
-        <Text style={styles.amount}>______ oz of water!</Text>
+        <Text style={styles.amount}>______ oz of water</Text>
       </View>
 
-      {/* Water Drop with Centered Text */}
+      {/* droplet */}
       <View style={styles.dropletContainer}>
         <Image
           source={require("../../assets/waterdrop.png")}
@@ -26,6 +69,23 @@ export default function HomePage() {
           <Text style={styles.dropGoalText}>Goal: ____ oz</Text>
         </View>
       </View>
+      <Modal visible={showNameModal} transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>What should we call you?</Text>
+            <TextInput
+              style={styles.modalInput}
+              placeholder="First name"
+              placeholderTextColor="white"
+              value={name}
+              onChangeText={setName}
+            />
+            <TouchableOpacity style={styles.modalButton} onPress={saveName}>
+              <Text style={styles.modalButtonText}>Continue</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -120,5 +180,48 @@ const styles = StyleSheet.create({
     width: 240,
     height: 320,
     resizeMode: "contain",
+  },
+
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
+  },
+
+  modalCard: {
+    width: "85%",
+    backgroundColor: "#48CAE4",
+    padding: 15,
+    borderRadius: 15,
+  },
+
+  modalTitle: {
+    color: "white",
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 5,
+  },
+
+  modalInput: {
+    borderBottomWidth: 2,
+    borderBottomColor: "#023E8A",
+    color: "white",
+    fontSize: 15,
+    paddingVertical: 10,
+    marginBottom: 15,
+  },
+
+  modalButton: {
+    backgroundColor: "#CAF0F8",
+    paddingVertical: 10,
+    borderRadius: 15,
+    alignItems: "center",
+  },
+
+  modalButtonText: {
+    fontSize: 20,
+    color: "#023E8A",
+    fontWeight: "bold",
   },
 });
