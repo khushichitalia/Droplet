@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { auth } from "../../lib/firebase";
-import { updateProfile } from "firebase/auth";
+import { updateProfile, signOut } from "firebase/auth";
+import { router } from "expo-router";
 import {
   Image,
   View,
@@ -17,6 +18,7 @@ export default function HomePage() {
   const [displayName, setDisplayName] = useState(
     auth.currentUser?.displayName ?? "",
   );
+  const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
     if (auth.currentUser && !auth.currentUser.displayName) {
@@ -47,10 +49,15 @@ export default function HomePage() {
 
   return (
     <View style={styles.container}>
-      <Image
-        source={require("../../assets/setting.png")}
+      <TouchableOpacity
         style={styles.gearIcon}
-      />
+        onPress={() => setShowSettings(true)}
+      >
+        <Image
+          source={require("../../assets/setting.png")}
+          style={styles.gearIcon}
+        />
+      </TouchableOpacity>
 
       {/* welcome */}
       <View style={styles.welcomeBox}>
@@ -82,6 +89,32 @@ export default function HomePage() {
             />
             <TouchableOpacity style={styles.modalButton} onPress={saveName}>
               <Text style={styles.modalButtonText}>Continue</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+      <Modal visible={showSettings} transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.settingsModalCard}>
+            <TouchableOpacity
+              style={styles.modalButton}
+              onPress={async () => {
+                try {
+                  await signOut(auth);
+                  setShowSettings(false);
+                  router.replace("/login");
+                } catch (error) {
+                  alert(error.message);
+                }
+              }}
+            >
+              <Text style={styles.modalButtonText}>Log Out</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.modalButton, { marginTop: 10 }]}
+              onPress={() => setShowSettings(false)}
+            >
+              <Text style={styles.modalButtonText}>Close</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -150,8 +183,8 @@ const styles = StyleSheet.create({
 
   gearIcon: {
     position: "absolute",
-    top: 40,
-    right: 30,
+    top: 25,
+    right: 10,
     width: 50,
     height: 50,
     resizeMode: "contain",
@@ -189,8 +222,8 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.5)",
   },
 
-  modalCard: {
-    width: "85%",
+  settingsModalCard: {
+    width: "50%",
     backgroundColor: "#48CAE4",
     padding: 15,
     borderRadius: 15,
