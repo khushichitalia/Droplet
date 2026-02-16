@@ -100,20 +100,27 @@ export default function HomePage() {
       <Modal visible={showSettings} transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.settingsModalCard}>
-            <TouchableOpacity style={[styles.modalButton, { marginBottom: 10 }]} onPress={() => setShowChangeName(true)}>
+            <TouchableOpacity
+              style={[styles.modalButton, { marginBottom: 10 }]}
+              onPress={() => setShowChangeName(true)}
+            >
               <Text style={[styles.modalButtonText]}>Edit Name</Text>
             </TouchableOpacity>
-            {showChangeName && ( 
+            {showChangeName && (
               <>
-              <TextInput
-              style={styles.modalInput}
-              placeholder="New display name"
-              placeholderTextColor="white"
-              value={name}
-              onChangeText={setName} />
-              <TouchableOpacity style={[styles.modalButton, { marginBottom: 10 }]} onPress={saveName}>
-                <Text style={styles.modalButtonText}>Save</Text>
-              </TouchableOpacity>
+                <TextInput
+                  style={styles.modalInput}
+                  placeholder="New display name"
+                  placeholderTextColor="white"
+                  value={name}
+                  onChangeText={setName}
+                />
+                <TouchableOpacity
+                  style={[styles.modalButton, { marginBottom: 10 }]}
+                  onPress={saveName}
+                >
+                  <Text style={styles.modalButtonText}>Save</Text>
+                </TouchableOpacity>
               </>
             )}
             <TouchableOpacity
