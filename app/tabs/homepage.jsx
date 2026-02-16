@@ -19,6 +19,7 @@ export default function HomePage() {
     auth.currentUser?.displayName ?? "",
   );
   const [showSettings, setShowSettings] = useState(false);
+  const [showChangeName, setShowChangeName] = useState(false);
 
   useEffect(() => {
     if (auth.currentUser && !auth.currentUser.displayName) {
@@ -36,6 +37,9 @@ export default function HomePage() {
       await updateProfile(auth.currentUser, { displayName: name.trim() });
       setDisplayName(name.trim());
       setShowNameModal(false);
+      setShowChangeName(false);
+      setShowSettings(false);
+      setName("");
     } catch (error) {
       alert(error.message);
     }
@@ -96,6 +100,22 @@ export default function HomePage() {
       <Modal visible={showSettings} transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.settingsModalCard}>
+            <TouchableOpacity style={[styles.modalButton, { marginBottom: 10 }]} onPress={() => setShowChangeName(true)}>
+              <Text style={[styles.modalButtonText]}>Edit Name</Text>
+            </TouchableOpacity>
+            {showChangeName && ( 
+              <>
+              <TextInput
+              style={styles.modalInput}
+              placeholder="New display name"
+              placeholderTextColor="white"
+              value={name}
+              onChangeText={setName} />
+              <TouchableOpacity style={[styles.modalButton, { marginBottom: 10 }]} onPress={saveName}>
+                <Text style={styles.modalButtonText}>Save</Text>
+              </TouchableOpacity>
+              </>
+            )}
             <TouchableOpacity
               style={styles.modalButton}
               onPress={async () => {
