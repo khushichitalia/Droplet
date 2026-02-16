@@ -222,6 +222,13 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.5)",
   },
 
+  modalCard: {
+    width: "85%",
+    backgroundColor: "#48CAE4",
+    padding: 15,
+    borderRadius: 15,
+  },
+
   settingsModalCard: {
     width: "50%",
     backgroundColor: "#48CAE4",
