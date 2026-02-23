@@ -1,22 +1,76 @@
-import React from "react";
-import { Image, View, Text, StyleSheet } from "react-native";
+import React, { useState, useEffect } from "react";
+import { auth } from "../../lib/firebase";
+import { updateProfile, signOut } from "firebase/auth";
+import { router } from "expo-router";
+import {
+  Image,
+  View,
+  Text,
+  StyleSheet,
+  Modal,
+  TextInput,
+  TouchableOpacity,
+} from "react-native";
 
 export default function HomePage() {
+  const [showNameModal, setShowNameModal] = useState(false);
+  const [name, setName] = useState("");
+  const [displayName, setDisplayName] = useState(
+    auth.currentUser?.displayName ?? "",
+  );
+  const [showSettings, setShowSettings] = useState(false);
+  const [showChangeName, setShowChangeName] = useState(false);
+
+  useEffect(() => {
+    if (auth.currentUser && !auth.currentUser.displayName) {
+      setShowNameModal(true);
+    }
+  }, []);
+
+  const saveName = async () => {
+    if (!name.trim()) {
+      alert("Please enter a name!");
+      return;
+    }
+
+    try {
+      await updateProfile(auth.currentUser, { displayName: name.trim() });
+      setDisplayName(name.trim());
+      setShowNameModal(false);
+      setShowChangeName(false);
+      setShowSettings(false);
+      setName("");
+    } catch (error) {
+      alert(error.message);
+    }
+  };
+
+  let greeting = "Welcome!";
+
+  if (displayName) {
+    greeting = `Hello, ${displayName}!`;
+  }
+
   return (
     <View style={styles.container}>
-      <Image
-        source={require("../../assets/setting.png")}
+      <TouchableOpacity
         style={styles.gearIcon}
-      />
+        onPress={() => setShowSettings(true)}
+      >
+        <Image
+          source={require("../../assets/setting.png")}
+          style={styles.gearIcon}
+        />
+      </TouchableOpacity>
 
-      {/* Welcome Box */}
+      {/* welcome */}
       <View style={styles.welcomeBox}>
-        <Text style={styles.welcomeTitle}>Welcome back ____!</Text>
+        <Text style={styles.welcomeTitle}>{greeting}</Text>
         <Text style={styles.welcomeSubtitle}>Today you drank</Text>
-        <Text style={styles.amount}>______ oz of water!</Text>
+        <Text style={styles.amount}>______ oz of water</Text>
       </View>
 
-      {/* Water Drop with Centered Text */}
+      {/* droplet */}
       <View style={styles.dropletContainer}>
         <Image
           source={require("../../assets/waterdrop.png")}
@@ -26,6 +80,72 @@ export default function HomePage() {
           <Text style={styles.dropGoalText}>Goal: ____ oz</Text>
         </View>
       </View>
+      <Modal visible={showNameModal} transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>What should we call you?</Text>
+            <TextInput
+              style={styles.modalInput}
+              placeholder="First name"
+              placeholderTextColor="white"
+              value={name}
+              onChangeText={setName}
+            />
+            <TouchableOpacity style={styles.modalButton} onPress={saveName}>
+              <Text style={styles.modalButtonText}>Continue</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+      <Modal visible={showSettings} transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.settingsModalCard}>
+            <TouchableOpacity
+              style={[styles.modalButton, { marginBottom: 10 }]}
+              onPress={() => setShowChangeName(true)}
+            >
+              <Text style={[styles.modalButtonText]}>Edit Name</Text>
+            </TouchableOpacity>
+            {showChangeName && (
+              <>
+                <TextInput
+                  style={styles.modalInput}
+                  placeholder="New display name"
+                  placeholderTextColor="white"
+                  value={name}
+                  onChangeText={setName}
+                />
+                <TouchableOpacity
+                  style={[styles.modalButton, { marginBottom: 10 }]}
+                  onPress={saveName}
+                >
+                  <Text style={styles.modalButtonText}>Save</Text>
+                </TouchableOpacity>
+              </>
+            )}
+            <TouchableOpacity
+              style={styles.modalButton}
+              onPress={async () => {
+                try {
+                  await signOut(auth);
+                  setShowSettings(false);
+                  router.replace("/login");
+                } catch (error) {
+                  alert(error.message);
+                }
+              }}
+            >
+              <Text style={styles.modalButtonText}>Log Out</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.modalButton, { marginTop: 10 }]}
+              onPress={() => setShowSettings(false)}
+            >
+              <Text style={styles.modalButtonText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -90,8 +210,8 @@ const styles = StyleSheet.create({
 
   gearIcon: {
     position: "absolute",
-    top: 40,
-    right: 30,
+    top: 25,
+    right: 10,
     width: 50,
     height: 50,
     resizeMode: "contain",
@@ -120,5 +240,55 @@ const styles = StyleSheet.create({
     width: 240,
     height: 320,
     resizeMode: "contain",
+  },
+
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
+  },
+
+  modalCard: {
+    width: "85%",
+    backgroundColor: "#48CAE4",
+    padding: 15,
+    borderRadius: 15,
+  },
+
+  settingsModalCard: {
+    width: "50%",
+    backgroundColor: "#48CAE4",
+    padding: 15,
+    borderRadius: 15,
+  },
+
+  modalTitle: {
+    color: "white",
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 5,
+  },
+
+  modalInput: {
+    borderBottomWidth: 2,
+    borderBottomColor: "#023E8A",
+    color: "white",
+    fontSize: 15,
+    paddingVertical: 10,
+    marginBottom: 15,
+  },
+
+  modalButton: {
+    backgroundColor: "#CAF0F8",
+    paddingVertical: 10,
+    borderRadius: 15,
+    alignItems: "center",
+  },
+
+  modalButtonText: {
+    fontSize: 20,
+    color: "#023E8A",
+    fontWeight: "bold",
   },
 });
