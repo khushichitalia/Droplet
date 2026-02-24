@@ -195,8 +195,8 @@ export default function Dashboard() {
                   right: 0 
                 }]} />
 
-                <View style={[styles.barsRow, { height: barsAreaHeight + 20, marginTop: barsAreaTop }]}> {
-                  activeData.map((val, i) => {
+                <View style={[styles.barsRow, { height: barsAreaHeight + 20, marginTop: barsAreaTop }]}>
+                  {activeData.map((val, i) => {
                     const ratio = activeMax > 0 ? Math.max(0, Math.min(1, val / activeMax)) : 0;
                     const heightPx = Math.max(6, Math.round(ratio * barsAreaHeight));
                     const meetsGoal = selected === "Week" ? val >= perDayGoal : val >= activeMax;
@@ -214,8 +214,8 @@ export default function Dashboard() {
                         <Text style={styles.barLabel}>{activeLabels[i] || ""}</Text>
                       </View>
                     );
-                  })
-                } </View>
+                  })}
+                </View>
               </View>
             </View>
           )}
