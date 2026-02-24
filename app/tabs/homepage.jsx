@@ -1,155 +1,93 @@
-// import React from "react";
-// import { Image, View, Text, StyleSheet } from "react-native";
-
-// export default function HomePage() {
-//   return (
-//     <View style={styles.container}>
-//       <Image
-//         source={require("../../assets/setting.png")}
-//         style={styles.gearIcon}
-//       />
-
-//       {/* Welcome Box */}
-//       <View style={styles.welcomeBox}>
-//         <Text style={styles.welcomeTitle}>Welcome back ____!</Text>
-//         <Text style={styles.welcomeSubtitle}>Today you drank</Text>
-//         <Text style={styles.amount}>______ oz of water!</Text>
-//       </View>
-
-//       {/* Water Drop with Centered Text */}
-//       <View style={styles.dropletContainer}>
-//         <Image
-//           source={require("../../assets/waterdrop.png")}
-//           style={styles.droplet}
-//         />
-//         <View style={styles.dropTextContainer}>
-//           <Text style={styles.dropGoalText}>Goal: ____ oz</Text>
-//         </View>
-//       </View>
-//     </View>
-//   );
-// }
-
-// const styles = StyleSheet.create({
-//   container: {
-//     flex: 1,
-//     backgroundColor: "#023E8A",
-//     justifyContent: "center",
-//     alignItems: "center",
-//   },
-
-//   gearPlaceholder: {
-//     position: "absolute",
-//     top: 40,
-//     right: 30,
-//     width: 50,
-//     height: 50,
-//     borderRadius: 25,
-//     backgroundColor: "#90E0EF",
-//   },
-
-//   welcomeBox: {
-//     backgroundColor: "#CAF0F8",
-//     borderRadius: 25,
-//     paddingVertical: 25,
-//     paddingHorizontal: 25,
-//     alignItems: "center",
-//     width: 300,
-//     height: 200,
-//   },
-
-//   welcomeTitle: {
-//     color: "#03045E",
-//     fontSize: 35,
-//     fontWeight: "400",
-//     textAlign: "center",
-//     marginBottom: 10,
-//   },
-
-//   welcomeSubtitle: {
-//     color: "black",
-//     fontSize: 24,
-//     fontWeight: "500",
-//   },
-
-//   amount: {
-//     color: "black",
-//     fontSize: 24,
-//     fontWeight: "500",
-//   },
-
-//   dropletPlaceholder: {
-//     marginTop: 25,
-//     width: 240,
-//     height: 320,
-//     borderRadius: 120,
-//     backgroundColor: "#90E0EF",
-//     alignItems: "center",
-//     justifyContent: "center",
-//   },
-
-//   gearIcon: {
-//     position: "absolute",
-//     top: 40,
-//     right: 30,
-//     width: 50,
-//     height: 50,
-//     resizeMode: "contain",
-//   },
-
-//   dropletContainer: {
-//     position: "relative",
-//     alignItems: "center",
-//     justifyContent: "center",
-//   },
-
-//   dropTextContainer: {
-//     position: "absolute",
-//     top: "55%",
-//     alignItems: "center",
-//     justifyContent: "center",
-//   },
-
-//   dropGoalText: {
-//     fontSize: 20,
-//     color: "#FFFFFF",
-//   },
-
-//   droplet: {
-//     marginTop: 20,
-//     width: 240,
-//     height: 320,
-//     resizeMode: "contain",
-//   },
-// });
-import React, { useEffect, useRef } from "react";
-import { Image, View, Text, StyleSheet, Animated } from "react-native";
+import React, { useEffect, useRef, useState } from "react";
+import {
+  Image,
+  View,
+  Text,
+  StyleSheet,
+  Animated,
+  TouchableOpacity,
+  Modal,
+  TextInput,
+  Alert,
+} from "react-native";
 import Svg, { Path, Rect, Defs, ClipPath, G } from "react-native-svg";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { router } from "expo-router";
+import { signOut } from "firebase/auth";
+
+import { auth } from "../../lib/firebase";
 
 const AnimatedRect = Animated.createAnimatedComponent(Rect);
+const NAME_STORAGE_KEY = "@droplet/display-name";
 
 export default function HomePage() {
-  // DUMMY DATA - Replace with real data from your app
-  const currentAmount = 40; // oz drank so far
-  const goalAmount = 80; // oz goal
-  const progressPercent = (currentAmount / goalAmount) * 100; // Calculate percentage
+  const currentAmount = 40;
+  const goalAmount = 80;
+  const progressPercent = Math.min((currentAmount / goalAmount) * 100, 100);
 
-  // Animated value for water fill
+  const [name, setName] = useState("");
+  const [showNameModal, setShowNameModal] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [showChangeName, setShowChangeName] = useState(false);
+
   const fillAnimation = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    // Reset animation value
     fillAnimation.setValue(0);
-    
-    // Animate the water fill when component mounts
     Animated.timing(fillAnimation, {
       toValue: progressPercent,
-      duration: 2500, // 2.5 seconds animation
+      duration: 2500,
       useNativeDriver: false,
     }).start();
-  }, [progressPercent]);
+  }, [fillAnimation, progressPercent]);
 
-  // Convert percentage to Y position (0% at bottom = y:360, 100% at top = y:0)
+  useEffect(() => {
+    const loadSavedName = async () => {
+      try {
+        const savedName = await AsyncStorage.getItem(NAME_STORAGE_KEY);
+        if (savedName && savedName.trim()) {
+          setName(savedName.trim());
+          setShowNameModal(false);
+          return;
+        }
+      } catch (error) {
+        console.log("Failed to load name", error);
+      }
+      setShowNameModal(true);
+    };
+
+    loadSavedName();
+  }, []);
+
+  const saveName = async () => {
+    const trimmedName = name.trim();
+    if (!trimmedName) {
+      Alert.alert("Name required", "Please enter a display name.");
+      return;
+    }
+
+    try {
+      await AsyncStorage.setItem(NAME_STORAGE_KEY, trimmedName);
+      setName(trimmedName);
+      setShowNameModal(false);
+      setShowChangeName(false);
+    } catch (error) {
+      Alert.alert("Save failed", "Could not save your name right now.");
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      setShowSettings(false);
+      router.replace("/login");
+    } catch (error) {
+      Alert.alert("Log out failed", error.message);
+    }
+  };
+
+  const greeting = `Welcome back ${name || "friend"}!`;
+
   const fillY = fillAnimation.interpolate({
     inputRange: [0, 100],
     outputRange: [360, 0],
@@ -158,36 +96,42 @@ export default function HomePage() {
   return (
     <View style={styles.container}>
       <TouchableOpacity
-        style={styles.gearIcon}
-      />
-      
-      {/* Welcome Box */}
+        style={styles.gearButton}
+        onPress={() => {
+          setShowSettings(true);
+          setShowChangeName(false);
+        }}
+      >
+        <Image
+          source={require("../../assets/setting.png")}
+          style={styles.gearIcon}
+        />
+      </TouchableOpacity>
+
       <View style={styles.welcomeBox}>
         <Text style={styles.welcomeTitle}>{greeting}</Text>
         <Text style={styles.welcomeSubtitle}>Today you drank</Text>
         <Text style={styles.amount}>{currentAmount} oz of water!</Text>
       </View>
 
-      {/* Water Drop with Animated Fill */}
       <View style={styles.dropletContainer}>
         <Svg width="280" height="360" viewBox="0 0 280 360">
           <Defs>
-            {/* Define smooth droplet shape with rounded bottom */}
             <ClipPath id="dropletClip">
-              <Path d="M 140,20 
-                       C 140,20 100,60 75,110 
-                       C 50,160 45,190 45,220 
-                       C 45,265 65,300 90,320 
-                       C 105,330 122,338 140,338 
-                       C 158,338 175,330 190,320 
-                       C 215,300 235,265 235,220 
-                       C 235,190 230,160 205,110 
-                       C 180,60 140,20 140,20 Z" 
+              <Path
+                d="M 140,20
+                   C 140,20 100,60 75,110
+                   C 50,160 45,190 45,220
+                   C 45,265 65,300 90,320
+                   C 105,330 122,338 140,338
+                   C 158,338 175,330 190,320
+                   C 215,300 235,265 235,220
+                   C 235,190 230,160 205,110
+                   C 180,60 140,20 140,20 Z"
               />
             </ClipPath>
           </Defs>
-          
-          {/* Water fill - animated rectangle clipped to droplet shape */}
+
           <G clipPath="url(#dropletClip)">
             <AnimatedRect
               x="0"
@@ -197,18 +141,17 @@ export default function HomePage() {
               fill="#48CAE4"
             />
           </G>
-          
-          {/* Smooth droplet outline with rounded bottom */}
-          <Path 
-            d="M 140,20 
-               C 140,20 100,60 75,110 
-               C 50,160 45,190 45,220 
-               C 45,265 65,300 90,320 
-               C 105,330 122,338 140,338 
-               C 158,338 175,330 190,320 
-               C 215,300 235,265 235,220 
-               C 235,190 230,160 205,110 
-               C 180,60 140,20 140,20 Z" 
+
+          <Path
+            d="M 140,20
+               C 140,20 100,60 75,110
+               C 50,160 45,190 45,220
+               C 45,265 65,300 90,320
+               C 105,330 122,338 140,338
+               C 158,338 175,330 190,320
+               C 215,300 235,265 235,220
+               C 235,190 230,160 205,110
+               C 180,60 140,20 140,20 Z"
             stroke="#000000"
             strokeWidth="8"
             fill="none"
@@ -217,12 +160,14 @@ export default function HomePage() {
           />
         </Svg>
 
-        {/* Text Overlay */}
         <View style={styles.dropTextContainer}>
-          <Text style={styles.dropPercentText}>{Math.round(progressPercent)}%</Text>
+          <Text style={styles.dropPercentText}>
+            {Math.round(progressPercent)}%
+          </Text>
           <Text style={styles.dropGoalText}>Goal: {goalAmount} oz</Text>
         </View>
       </View>
+
       <Modal visible={showNameModal} transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
@@ -240,15 +185,17 @@ export default function HomePage() {
           </View>
         </View>
       </Modal>
+
       <Modal visible={showSettings} transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.settingsModalCard}>
             <TouchableOpacity
               style={[styles.modalButton, { marginBottom: 10 }]}
-              onPress={() => setShowChangeName(true)}
+              onPress={() => setShowChangeName((prev) => !prev)}
             >
-              <Text style={[styles.modalButtonText]}>Edit Name</Text>
+              <Text style={styles.modalButtonText}>Edit Name</Text>
             </TouchableOpacity>
+
             {showChangeName && (
               <>
                 <TextInput
@@ -266,23 +213,17 @@ export default function HomePage() {
                 </TouchableOpacity>
               </>
             )}
-            <TouchableOpacity
-              style={styles.modalButton}
-              onPress={async () => {
-                try {
-                  await signOut(auth);
-                  setShowSettings(false);
-                  router.replace("/login");
-                } catch (error) {
-                  alert(error.message);
-                }
-              }}
-            >
+
+            <TouchableOpacity style={styles.modalButton} onPress={handleLogout}>
               <Text style={styles.modalButtonText}>Log Out</Text>
             </TouchableOpacity>
+
             <TouchableOpacity
               style={[styles.modalButton, { marginTop: 10 }]}
-              onPress={() => setShowSettings(false)}
+              onPress={() => {
+                setShowSettings(false);
+                setShowChangeName(false);
+              }}
             >
               <Text style={styles.modalButtonText}>Close</Text>
             </TouchableOpacity>
@@ -300,10 +241,15 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  gearIcon: {
+  gearButton: {
     position: "absolute",
-    top: 40,
-    right: 30,
+    top: 25,
+    right: 10,
+    width: 50,
+    height: 50,
+    zIndex: 20,
+  },
+  gearIcon: {
     width: 50,
     height: 50,
     resizeMode: "contain",
@@ -334,26 +280,6 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "500",
   },
-
-  dropletPlaceholder: {
-    marginTop: 25,
-    width: 240,
-    height: 320,
-    borderRadius: 120,
-    backgroundColor: "#90E0EF",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  gearIcon: {
-    position: "absolute",
-    top: 25,
-    right: 10,
-    width: 50,
-    height: 50,
-    resizeMode: "contain",
-  },
-
   dropletContainer: {
     position: "relative",
     marginTop: 20,
@@ -385,43 +311,30 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 3,
   },
-});
-
-  droplet: {
-    marginTop: 20,
-    width: 240,
-    height: 320,
-    resizeMode: "contain",
-  },
-
   modalOverlay: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "rgba(0,0,0,0.5)",
   },
-
   modalCard: {
     width: "85%",
     backgroundColor: "#48CAE4",
     padding: 15,
     borderRadius: 15,
   },
-
   settingsModalCard: {
     width: "50%",
     backgroundColor: "#48CAE4",
     padding: 15,
     borderRadius: 15,
   },
-
   modalTitle: {
     color: "white",
     fontSize: 20,
     fontWeight: "bold",
     marginBottom: 5,
   },
-
   modalInput: {
     borderBottomWidth: 2,
     borderBottomColor: "#023E8A",
@@ -430,14 +343,12 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     marginBottom: 15,
   },
-
   modalButton: {
     backgroundColor: "#CAF0F8",
     paddingVertical: 10,
     borderRadius: 15,
     alignItems: "center",
   },
-
   modalButtonText: {
     fontSize: 20,
     color: "#023E8A",
