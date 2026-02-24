@@ -41,5 +41,5 @@ yarn-error.*
 /ios
 /android
 
-lib/firebase.js
-firebase.js
+# lib/firebase.js
+# firebase.js
