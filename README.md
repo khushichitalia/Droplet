@@ -6,8 +6,9 @@
 
 - **Frontend:** React Native (Expo)
 - **Auth:** Firebase 
-- **Database:** MongoDB
+- **Database:** MongoDB Atlas
 - **Hardware:** Load cell sensor
+- **Backend:** Express.js/Node.js (hosted on Render)
 
 ### Firebase Setup
 
@@ -24,6 +25,12 @@ EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=...
 EXPO_PUBLIC_FIREBASE_APP_ID=...
 EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID=...
 ```
+
+### Setup
+
+1. Copy `.env.example` to `.env` in the project root
+2. Add your Firebase credentials (see above)
+3. Set the API URL for the backend
 
 ### Running the App
 
