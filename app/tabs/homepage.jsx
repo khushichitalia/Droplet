@@ -10,6 +10,7 @@ import {
   TextInput,
   Alert,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Path, Rect, Defs, ClipPath, G } from "react-native-svg";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
@@ -94,7 +95,7 @@ export default function HomePage() {
   });
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <TouchableOpacity
         style={styles.gearButton}
         onPress={() => {
@@ -230,7 +231,7 @@ export default function HomePage() {
           </View>
         </View>
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -243,7 +244,7 @@ const styles = StyleSheet.create({
   },
   gearButton: {
     position: "absolute",
-    top: 25,
+    top: 40,
     right: 10,
     width: 50,
     height: 50,
