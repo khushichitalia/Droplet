@@ -34,6 +34,46 @@ export default function LoginScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
+      <View
+        style={[
+          styles.bubble,
+          {
+            top: 80,
+            left: 265,
+            backgroundColor: "#CAF0F8",
+            width: 90,
+            height: 90,
+            opacity: 0.8,
+          },
+        ]}
+      />
+      <View
+        style={[
+          styles.bubble,
+          {
+            top: 475,
+            right: 45,
+            backgroundColor: "#CAF0F8",
+            width: 50,
+            height: 50,
+            opacity: 0.7,
+          },
+        ]}
+      />
+      <View
+        style={[
+          styles.bubble,
+          {
+            top: 415,
+            left: 30,
+            backgroundColor: "#CAF0F8",
+            width: 20,
+            height: 20,
+            opacity: 0.6,
+          },
+        ]}
+      />
+
       <Text style={styles.title}>Log In</Text>
 
       {/* email field */}
@@ -89,47 +129,6 @@ export default function LoginScreen({ navigation }) {
         </Text>{" "}
         Now!
       </Text>
-
-      {/* bubbles */}
-      <View
-        style={[
-          styles.bubble,
-          {
-            top: 80,
-            left: 265,
-            backgroundColor: "#CAF0F8",
-            width: 90,
-            height: 90,
-            opacity: 0.8,
-          },
-        ]}
-      />
-      <View
-        style={[
-          styles.bubble,
-          {
-            top: 475,
-            right: 45,
-            backgroundColor: "#CAF0F8",
-            width: 50,
-            height: 50,
-            opacity: 0.7,
-          },
-        ]}
-      />
-      <View
-        style={[
-          styles.bubble,
-          {
-            top: 415,
-            left: 30,
-            backgroundColor: "#CAF0F8",
-            width: 20,
-            height: 20,
-            opacity: 0.6,
-          },
-        ]}
-      />
 
       {/* waves */}
       <Image

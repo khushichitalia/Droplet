@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { StyleSheet, Text, View, TouchableOpacity } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Circle } from "react-native-svg";
+import { BarChart } from "react-native-gifted-charts";
 
 export default function Dashboard() {
   const [selected, setSelected] = useState("Week");
@@ -9,22 +11,29 @@ export default function Dashboard() {
     week: { amount: 17.9, goal: 21 },
     weekDays: [3.0, 2.2, 3.3, 3.0, 3.0, 2.2, 1.8],
     monthDays: [17.9, 18.2, 19.0, 16.5],
-    monthDaysDaily: [1.5,2.8,3.0,2.7,3.3,2.9,3.0, 2.2,3.1,3.0,2.6,2.9,3.2,3.0, 2.5,2.7,3.0,3.1,2.8,3.0, 3.2,2.9,2.6,3.0,2.7,3.0,3.1,2.8,3.0,2.5],
+    monthDaysDaily: [
+      1.5, 2.8, 3.0, 2.7, 3.3, 2.9, 3.0, 2.2, 3.1, 3.0, 2.6, 2.9, 3.2, 3.0, 2.5,
+      2.7, 3.0, 3.1, 2.8, 3.0, 3.2, 2.9, 2.6, 3.0, 2.7, 3.0, 3.1, 2.8, 3.0, 2.5,
+    ],
     yearData: [70, 75, 80, 78, 85, 88, 90, 82, 76, 70, 68, 72],
     streak: 3,
   });
 
-  const todayProgress = data.today.goal > 0 ? data.today.amount / data.today.goal : 0;
-  const weekProgress = data.week.goal > 0 ? data.week.amount / data.week.goal : 0;
+  const todayProgress =
+    data.today.goal > 0 ? data.today.amount / data.today.goal : 0;
+  const weekProgress =
+    data.week.goal > 0 ? data.week.amount / data.week.goal : 0;
   const todayText = `${Math.round(todayProgress * 100)}%`;
   const weekText = `${Math.round(weekProgress * 100)}%`;
   const todayLabel = `${data.today.amount}/${data.today.goal} L`;
   const weekLabel = `${data.week.amount}/${data.week.goal} L`;
   const streakNumber = data.streak;
   const weekDays = data.weekDays || [];
-  const perDayGoal = (data.week && data.week.goal ? data.week.goal / 7 : 3);
+  const perDayGoal = data.week && data.week.goal ? data.week.goal / 7 : 3;
   const weekMax = Math.max(perDayGoal, 3, ...weekDays);
-  const weekAvg = weekDays.length ? weekDays.reduce((s, v) => s + v, 0) / weekDays.length : 0;
+  const weekAvg = weekDays.length
+    ? weekDays.reduce((s, v) => s + v, 0) / weekDays.length
+    : 0;
   const weekAvgText = `${weekAvg.toFixed(1)}L/Day`;
   const monthDays = data.monthDays || [];
   const yearData = data.yearData || [];
@@ -34,33 +43,43 @@ export default function Dashboard() {
   if (selected === "Year") activeData = yearData;
 
   let activeLabels = [];
-  if (activeData.length === 7) activeLabels = ["M", "T", "W", "R", "F", "S", "Su"];
+  if (activeData.length === 7)
+    activeLabels = ["M", "T", "W", "R", "F", "S", "Su"];
   else if (activeData.length === 4) activeLabels = ["W1", "W2", "W3", "W4"];
-  else if (activeData.length === 12) activeLabels = ["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"];
+  else if (activeData.length === 12)
+    activeLabels = ["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"];
   else activeLabels = activeData.map((_, i) => `#${i + 1}`);
 
   const activeMax = Math.max(perDayGoal, 3, ...activeData);
-  const activeAvg = activeData.length ? activeData.reduce((s, v) => s + v, 0) / activeData.length : 0;
+  const activeAvg = activeData.length
+    ? activeData.reduce((s, v) => s + v, 0) / activeData.length
+    : 0;
   const activeAvgText = `${activeAvg.toFixed(1)}${selected === "Week" ? "L/Day" : selected === "Month" ? "L/Week" : ""}`;
 
-  const barsAreaTop = 300;
-  const barsAreaHeight = 250;
-  const goalTop = activeMax > 0 ? barsAreaTop + (1 - Math.min(perDayGoal / activeMax, 1)) * barsAreaHeight : barsAreaTop;
+  const barsAreaTop = 50;
+  const barsAreaHeight = 180;
+  const goalTop =
+    activeMax > 0
+      ? barsAreaTop + (1 - Math.min(perDayGoal / activeMax, 1)) * barsAreaHeight
+      : barsAreaTop;
 
   const [selectedDay, setSelectedDay] = useState(0);
   const monthDaysDaily = data.monthDaysDaily || [];
   const monthName = new Date().toLocaleString("default", { month: "long" });
   const monthYearLabel = `${monthName} ${new Date().getFullYear()}`;
-  const monthAvg = monthDaysDaily.length ? (monthDaysDaily.reduce((s,v)=>s+v,0)/monthDaysDaily.length) : 0;
-
+  const monthAvg = monthDaysDaily.length
+    ? monthDaysDaily.reduce((s, v) => s + v, 0) / monthDaysDaily.length
+    : 0;
 
   const today = new Date();
-  const isCurrentMonth = today.getMonth() === new Date().getMonth() && today.getFullYear() === new Date().getFullYear();
+  const isCurrentMonth =
+    today.getMonth() === new Date().getMonth() &&
+    today.getFullYear() === new Date().getFullYear();
   const isFutureDay = isCurrentMonth && selectedDay > today.getDate() - 1;
   const selectedDayValue = monthDaysDaily[selectedDay];
   const hasData = typeof selectedDayValue === "number";
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <View style={styles.card}>
         <View style={styles.cardInner}>
           <View style={styles.topRow}>
@@ -70,8 +89,8 @@ export default function Dashboard() {
               </View>
               <View style={styles.circleWrap}>
                 <CircularProgress
-                  size={96}
-                  strokeWidth={12}
+                  size={84}
+                  strokeWidth={10}
                   progress={todayProgress}
                   color="#073B66"
                   bgColor="#8ED6F9"
@@ -88,8 +107,8 @@ export default function Dashboard() {
               </View>
               <View style={styles.circleWrap}>
                 <CircularProgress
-                  size={96}
-                  strokeWidth={12}
+                  size={84}
+                  strokeWidth={10}
                   progress={weekProgress}
                   color="#073B66"
                   bgColor="#8ED6F9"
@@ -154,7 +173,7 @@ export default function Dashboard() {
               <TouchableOpacity
                 style={[
                   styles.segmentButton,
-                selected === "Year" && styles.segmentSelected,
+                  selected === "Year" && styles.segmentSelected,
                 ]}
                 onPress={() => setSelected("Year")}
               >
@@ -173,145 +192,183 @@ export default function Dashboard() {
 
           {selected === "Week" && (
             <View style={styles.chartArea}>
-              <View style={[styles.chartLeftAxis, { height:  barsAreaHeight + 100 , justifyContent: 'space-between' }]}>
-                <Text style={styles.axisLabel}>L</Text>
-                <Text style={styles.axisNumber}>3</Text>
-                <Text style={styles.axisNumber}>2</Text>
-                <Text style={styles.axisNumber}>1</Text>
-                <Text style={styles.axisNumber}>0</Text>
-              </View>
-
-              <View style={styles.chartMain}>
-                <Text style={styles.avgText}>AVG:{"\n"}<Text style={styles.avgNum}>{activeAvgText}</Text></Text>
-
-                {/* Goal line - dashed dark blue */}
-                <View style={[styles.goalLine, { position: 'absolute', top: goalTop-225, left: 0, right: 0 }]} />
-               
-                {/* Avg line - solid light blue */}
-                <View style={[styles.avgLine, { 
-                  position: 'absolute', 
-                  top: 120, 
-                  left: 0, 
-                  right: 0 
-                }]} />
-
-                <View style={[styles.barsRow, { height: barsAreaHeight + 20, marginTop: barsAreaTop }]}>
-                  {activeData.map((val, i) => {
-                    const ratio = activeMax > 0 ? Math.max(0, Math.min(1, val / activeMax)) : 0;
-                    const heightPx = Math.max(6, Math.round(ratio * barsAreaHeight));
-                    const meetsGoal = selected === "Week" ? val >= perDayGoal : val >= activeMax;
-                    return (
-                      <View key={i} style={styles.barContainer}>
-                        <View
-                          style={[
-                            styles.bar,
-                            {
-                              height: heightPx,
-                              backgroundColor: meetsGoal ? "#073B66" : "#8EBDE0",
-                            },
-                          ]}
-                        />
-                        <Text style={styles.barLabel}>{activeLabels[i] || ""}</Text>
-                      </View>
-                    );
-                  })}
-                </View>
+              <Text style={styles.avgText}>
+                AVG: <Text style={styles.avgNum}>{activeAvgText}</Text>
+              </Text>
+              <View style={{ alignItems: "center", overflow: "hidden" }}>
+                <BarChart
+                  data={weekDays.map((val, i) => ({
+                    value: val,
+                    label: activeLabels[i],
+                    frontColor: val >= perDayGoal ? "#073B66" : "#8EBDE0",
+                  }))}
+                  barWidth={16}
+                  spacing={16}
+                  noOfSections={4}
+                  maxValue={4}
+                  yAxisThickness={0}
+                  xAxisThickness={1}
+                  xAxisColor="#B9EEF6"
+                  yAxisTextStyle={{
+                    color: "#0A4A7A",
+                    fontWeight: "800",
+                    fontSize: 12,
+                  }}
+                  xAxisLabelTextStyle={{
+                    color: "#073B66",
+                    fontWeight: "900",
+                    fontSize: 11,
+                  }}
+                  barBorderRadius={8}
+                  height={150}
+                  width={280}
+                  showGradient={false}
+                  backgroundColor="transparent"
+                  rulesType="solid"
+                  rulesColor="#CDF6FB"
+                  rulesThickness={1}
+                  hideRules={false}
+                  yAxisLabelSuffix=" L"
+                  initialSpacing={10}
+                  endSpacing={10}
+                />
               </View>
             </View>
           )}
 
           {selected === "Month" && (
-  <View style={styles.monthArea}>
-    <Text style={styles.monthTitle}>{monthYearLabel}</Text>
+            <View style={styles.monthArea}>
+              <Text style={styles.monthTitle}>{monthYearLabel}</Text>
 
-    <View style={styles.monthGrid}>
-      {(() => {
-        const now = new Date();
-        const year = now.getFullYear();
-        const month = now.getMonth(); // 0-based
-        const daysInMonth = new Date(year, month + 1, 0).getDate();
-        const todayIndex = isCurrentMonth ? today.getDate() - 1 : -1;
+              <View style={styles.monthGrid}>
+                {(() => {
+                  const now = new Date();
+                  const year = now.getFullYear();
+                  const month = now.getMonth(); // 0-based
+                  const daysInMonth = new Date(year, month + 1, 0).getDate();
+                  const todayIndex = isCurrentMonth ? today.getDate() - 1 : -1;
 
-        const rows = Math.ceil(daysInMonth / 7);
-        return Array.from({ length: rows }).map((_, row) => (
-          <View key={row} style={styles.monthRow}>
-            {Array.from({ length: 7 }).map((__, idx) => {
-              const i = row * 7 + idx;
-              if (i >= daysInMonth) {
-                return <View key={idx} style={[styles.daySquare, styles.daySquareEmpty]} />;
-              }
+                  const rows = Math.ceil(daysInMonth / 7);
+                  return Array.from({ length: rows }).map((_, row) => (
+                    <View key={row} style={styles.monthRow}>
+                      {Array.from({ length: 7 }).map((__, idx) => {
+                        const i = row * 7 + idx;
+                        if (i >= daysInMonth) {
+                          return (
+                            <View
+                              key={idx}
+                              style={[styles.daySquare, styles.daySquareEmpty]}
+                            />
+                          );
+                        }
 
-              const val = monthDaysDaily[i];
-              const isFuture = i > todayIndex;
-              const hasValue = typeof val === "number";
-              const meets = hasValue && val >= perDayGoal;
+                        const val = monthDaysDaily[i];
+                        const isFuture = i > todayIndex;
+                        const hasValue = typeof val === "number";
+                        const meets = hasValue && val >= perDayGoal;
 
-              const bgColor = !hasValue || isFuture ? "transparent" : meets ? "#073B66" : "#8EBDE0";
-              const textColor = !hasValue || isFuture ? "#073B66" : meets ? "#FFFFFF" : "#073B66";
+                        const bgColor =
+                          !hasValue || isFuture
+                            ? "transparent"
+                            : meets
+                              ? "#073B66"
+                              : "#8EBDE0";
+                        const textColor =
+                          !hasValue || isFuture
+                            ? "#073B66"
+                            : meets
+                              ? "#FFFFFF"
+                              : "#073B66";
 
-              return (
-                <TouchableOpacity
-                  key={idx}
-                  style={[
-                    styles.daySquare,
-                    !hasValue && styles.daySquareEmpty,
-                    i === selectedDay && styles.daySquareSelected,
-                    { backgroundColor: bgColor },
-                  ]}
-                  onPress={() => setSelectedDay(i)}
-                >
-                  <Text style={[styles.dayNumber, { color: textColor }]}>{i + 1}</Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        ));
-      })()}
-    </View>
+                        return (
+                          <TouchableOpacity
+                            key={idx}
+                            style={[
+                              styles.daySquare,
+                              !hasValue && styles.daySquareEmpty,
+                              i === selectedDay && styles.daySquareSelected,
+                              { backgroundColor: bgColor },
+                            ]}
+                            onPress={() => setSelectedDay(i)}
+                          >
+                            <Text
+                              style={[styles.dayNumber, { color: textColor }]}
+                            >
+                              {i + 1}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                  ));
+                })()}
+              </View>
 
-    {!isFutureDay && hasData && (
-      <View style={styles.monthFooter}>
-        <View style={styles.selectedDayPill}>
-          <Text style={styles.selectedDayText}>{`Feb ${selectedDay + 1}`}</Text>
-        </View>
+              {!isFutureDay && hasData && (
+                <View style={styles.monthFooter}>
+                  <View style={styles.selectedDayPill}>
+                    <Text
+                      style={styles.selectedDayText}
+                    >{`Feb ${selectedDay + 1}`}</Text>
+                  </View>
 
-        <View style={styles.dayDetails}>
-          <Text style={styles.detailText}>You Drank {selectedDayValue} L.</Text>
-          <Text style={styles.detailText}>Your Goal was {data.today.goal} L.</Text>
-        </View>
+                  <View style={styles.dayDetails}>
+                    <Text style={styles.detailText}>
+                      You Drank {selectedDayValue} L.
+                    </Text>
+                    <Text style={styles.detailText}>
+                      Your Goal was {data.today.goal} L.
+                    </Text>
+                  </View>
 
-        <View style={styles.monthAvgWrap}>
-          <View style={styles.avgCircle}>
-            <Text style={styles.avgNumLarge}>{monthAvg.toFixed(1)}</Text>
-          </View>
-          <Text style={styles.avgLabel}>AVG</Text>
-          <Text style={styles.avgUnit}>L/Day</Text>
-        </View>
-      </View>
-    )}
-  </View>
-)}
+                  <View style={styles.monthAvgWrap}>
+                    <View style={styles.avgCircle}>
+                      <Text style={styles.avgNumLarge}>
+                        {monthAvg.toFixed(1)}
+                      </Text>
+                    </View>
+                    <Text style={styles.avgLabel}>AVG</Text>
+                    <Text style={styles.avgUnit}>L/Day</Text>
+                  </View>
+                </View>
+              )}
+            </View>
+          )}
 
-
-        {selected === "Year" && (
+          {selected === "Year" && (
             <View style={styles.yearArea}>
               <Text style={styles.monthTitle}>Year</Text>
               <View style={styles.yearGrid}>
                 {yearData.map((val, i) => {
-                  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+                  const months = [
+                    "Jan",
+                    "Feb",
+                    "Mar",
+                    "Apr",
+                    "May",
+                    "Jun",
+                    "Jul",
+                    "Aug",
+                    "Sep",
+                    "Oct",
+                    "Nov",
+                    "Dec",
+                  ];
                   const pct = Math.max(0, Math.min(1, val / 100));
                   return (
                     <View key={i} style={styles.yearItem}>
                       <CircularProgress
-                        size={72}
-                        strokeWidth={10}
+                        size={48}
+                        strokeWidth={6}
                         progress={pct}
                         color="#073B66"
                         bgColor="#8ED6F9"
                         innerColor="#E6FBFF"
-                        text={`${Math.round(pct*100)}%`}
+                        text={`${Math.round(pct * 100)}%`}
                       />
-                      <Text style={[styles.barLabel, {marginTop:6}]}>{months[i]}</Text>
+                      <Text style={[styles.barLabel, { marginTop: 6 }]}>
+                        {months[i]}
+                      </Text>
                     </View>
                   );
                 })}
@@ -319,8 +376,8 @@ export default function Dashboard() {
             </View>
           )}
         </View>
-        </View>
       </View>
+    </SafeAreaView>
   );
 }
 
@@ -335,10 +392,18 @@ function CircularProgress({
 }) {
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference * (1 - Math.max(0, Math.min(progress, 1)));
+  const strokeDashoffset =
+    circumference * (1 - Math.max(0, Math.min(progress, 1)));
 
   return (
-    <View style={{ width: size, height: size, alignItems: "center", justifyContent: "center" }}>
+    <View
+      style={{
+        width: size,
+        height: size,
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
       <Svg width={size} height={size}>
         <Circle
           stroke={bgColor}
@@ -373,7 +438,9 @@ function CircularProgress({
           backgroundColor: innerColor,
         }}
       >
-        <Text style={[styles.donutText, { fontSize: 20 }]}>{text}</Text>
+        <Text style={[styles.donutText, { fontSize: size > 50 ? 16 : 12 }]}>
+          {text}
+        </Text>
       </View>
     </View>
   );
@@ -382,9 +449,9 @@ function CircularProgress({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#023E8A", 
+    backgroundColor: "#023E8A",
     alignItems: "center",
-    justifyContent: "center",
+    paddingTop: 24,
   },
   card: {
     width: "90%",
@@ -483,16 +550,16 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   circleWrap: {
-    height: 110,
+    height: 96,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 6,
   },
   streakCircle: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    borderWidth: 12,
+    width: 84,
+    height: 84,
+    borderRadius: 42,
+    borderWidth: 10,
     borderColor: "#073B66",
     alignItems: "center",
     justifyContent: "center",
@@ -503,7 +570,7 @@ const styles = StyleSheet.create({
   },
   streakNumber: {
     color: "#073B66",
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: "800",
   },
   dayNumber: {
@@ -526,7 +593,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 4,
     justifyContent: "space-between",
-    position: 'relative',
+    position: "relative",
     zIndex: 10,
   },
   segmentButton: {
@@ -549,9 +616,11 @@ const styles = StyleSheet.create({
     fontWeight: "800",
   },
   chartArea: {
-    flex: 1,
-    flexDirection: "row",
     marginTop: 6,
+    paddingHorizontal: 10,
+    paddingTop: 10,
+    paddingBottom: 10,
+    overflow: "hidden",
   },
   chartLeftAxis: {
     width: 30,
@@ -573,18 +642,17 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingLeft: 8,
     paddingRight: 6,
-    paddingTop: 36,
+    paddingTop: 10,
     position: "relative",
     zIndex: 1,
-    height: 360,
+    height: 200,
   },
   avgText: {
-    position: "absolute",
-    right: 8,
-    top: 6,
     color: "#4CCCE6",
     fontWeight: "800",
     textAlign: "right",
+    marginBottom: 8,
+    fontSize: 14,
   },
   avgNum: {
     color: "#4CCCE6",
@@ -658,10 +726,10 @@ const styles = StyleSheet.create({
     width: 34,
     height: 26,
     borderRadius: 6,
-    borderWidth: 3,              // ALWAYS present
-  borderColor: "transparent",  // invisible unless selected
-  alignItems: "center",
-  justifyContent: "center",
+    borderWidth: 3, // ALWAYS present
+    borderColor: "transparent", // invisible unless selected
+    alignItems: "center",
+    justifyContent: "center",
   },
   daySquareSelected: {
     borderWidth: 3,
@@ -676,17 +744,18 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginTop: 14,
+    marginTop: 8,
   },
   selectedDayPill: {
     backgroundColor: "#73F0FF",
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 16,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 12,
   },
   selectedDayText: {
     color: "#073B66",
     fontWeight: "900",
+    fontSize: 12,
   },
   dayDetails: {
     flex: 1,
@@ -695,28 +764,29 @@ const styles = StyleSheet.create({
   detailText: {
     color: "#073B66",
     fontWeight: "700",
+    fontSize: 11,
   },
   monthAvgWrap: {
     alignItems: "center",
   },
   avgCircle: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
     borderWidth: 2,
     borderColor: "#073B66",
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 4,
+    marginBottom: 2,
     backgroundColor: "transparent",
   },
   avgNumLarge: {
     color: "#073B66",
     fontWeight: "900",
-    fontSize: 20,
+    fontSize: 16,
   },
-  avgLabel: { color: "#4CCCE6", fontWeight: "800" },
-  avgUnit: { color: "#073B66", fontWeight: "800" },
+  avgLabel: { color: "#4CCCE6", fontWeight: "800", fontSize: 10 },
+  avgUnit: { color: "#073B66", fontWeight: "800", fontSize: 10 },
   yearArea: {
     paddingTop: 8,
     alignItems: "center",
@@ -734,6 +804,6 @@ const styles = StyleSheet.create({
   },
   text: {
     fontSize: 20,
-    color: "white", 
+    color: "white",
   },
 });

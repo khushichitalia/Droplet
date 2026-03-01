@@ -31,39 +31,6 @@ export default function ForgotPasswordScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Reset</Text>
-
-      {/* email field */}
-      <View style={styles.inputContainer}>
-        <Image
-          source={require("../../assets/User.png")}
-          style={styles.icon}
-          resizeMode="contain"
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
-          placeholderTextColor="#CAF0F8"
-          value={email}
-          onChangeText={setEmail}
-          autoCapitalize="none"
-          keyboardType="email-address"
-        />
-      </View>
-
-      {/* send reset link */}
-      <TouchableOpacity style={styles.button} onPress={handleReset}>
-        <Text style={styles.buttonText}>Send</Text>
-      </TouchableOpacity>
-
-      <Text style={styles.link}>
-        Back to{" "}
-        <Text style={styles.signUp} onPress={() => router.replace("/login")}>
-          Sign In
-        </Text>
-      </Text>
-
-      {/* bubbles */}
       <View
         style={[
           styles.bubble,
@@ -103,6 +70,34 @@ export default function ForgotPasswordScreen() {
           },
         ]}
       />
+
+      <Text style={styles.title}>Reset</Text>
+      <View style={styles.inputContainer}>
+        <Image
+          source={require("../../assets/User.png")}
+          style={styles.icon}
+          resizeMode="contain"
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Email"
+          placeholderTextColor="#CAF0F8"
+          value={email}
+          onChangeText={setEmail}
+          autoCapitalize="none"
+          keyboardType="email-address"
+        />
+      </View>
+      <TouchableOpacity style={styles.button} onPress={handleReset}>
+        <Text style={styles.buttonText}>Send</Text>
+      </TouchableOpacity>
+
+      <Text style={styles.link}>
+        Back to{" "}
+        <Text style={styles.signUp} onPress={() => router.replace("/login")}>
+          Sign In
+        </Text>
+      </Text>
 
       {/* waves */}
       <Image

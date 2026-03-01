@@ -1,4 +1,12 @@
-import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  ScrollView,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useState, useEffect } from "react";
 import Svg, { Circle } from "react-native-svg";
 
@@ -27,8 +35,10 @@ export default function ScreenTime() {
   };
 
   const handleSet = () => {
-    const totalSeconds = (selectedHour * 3600) + (selectedMinute * 60);
-    console.log(`Set ${selectedHour}h ${selectedMinute}m limit for ${selectedApp}`);
+    const totalSeconds = selectedHour * 3600 + selectedMinute * 60;
+    console.log(
+      `Set ${selectedHour}h ${selectedMinute}m limit for ${selectedApp}`,
+    );
     setTimeRemaining(totalSeconds);
     setShowCountdown(true);
     setShowTimeLimit(false);
@@ -43,7 +53,7 @@ export default function ScreenTime() {
   useEffect(() => {
     if (showCountdown && timeRemaining > 0) {
       const timer = setInterval(() => {
-        setTimeRemaining(prev => {
+        setTimeRemaining((prev) => {
           if (prev <= 1) {
             setShowCountdown(false);
             setSelectedApp(null);
@@ -67,12 +77,12 @@ export default function ScreenTime() {
 
   // Countdown Screen
   if (showCountdown) {
-    const totalSeconds = (selectedHour * 3600) + (selectedMinute * 60);
+    const totalSeconds = selectedHour * 3600 + selectedMinute * 60;
     const progress = timeRemaining / totalSeconds;
     const { hours, minutes, seconds } = formatTime(timeRemaining);
-    
+
     return (
-      <View style={styles.container}>
+      <SafeAreaView style={styles.container}>
         <View style={styles.titleBox}>
           <Text style={styles.titleText}>{selectedApp}</Text>
         </View>
@@ -80,7 +90,7 @@ export default function ScreenTime() {
         <View style={styles.card}>
           <View style={styles.countdownContainer}>
             <Text style={styles.countdownLabel}>Time Remaining</Text>
-            
+
             <View style={styles.circleContainer}>
               <CircularProgress
                 size={250}
@@ -97,7 +107,7 @@ export default function ScreenTime() {
               </View>
             </View>
 
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.cancelButton}
               onPress={() => {
                 setShowCountdown(false);
@@ -109,14 +119,14 @@ export default function ScreenTime() {
             </TouchableOpacity>
           </View>
         </View>
-      </View>
+      </SafeAreaView>
     );
   }
 
   // Time Limit Screen
   if (showTimeLimit) {
     return (
-      <View style={styles.container}>
+      <SafeAreaView style={styles.container}>
         {/* Back Button */}
         <TouchableOpacity style={styles.backButton} onPress={handleBack}>
           <Text style={styles.backButtonText}>← Back</Text>
@@ -142,7 +152,7 @@ export default function ScreenTime() {
             {/* Hours Picker */}
             <View style={styles.pickerColumn}>
               <Text style={styles.pickerLabel}>{selectedHour} hours</Text>
-              <ScrollView 
+              <ScrollView
                 style={styles.pickerScroll}
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.pickerContent}
@@ -169,7 +179,7 @@ export default function ScreenTime() {
             {/* Minutes Picker */}
             <View style={styles.pickerColumn}>
               <Text style={styles.pickerLabel}>{selectedMinute} min</Text>
-              <ScrollView 
+              <ScrollView
                 style={styles.pickerScroll}
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.pickerContent}
@@ -194,13 +204,13 @@ export default function ScreenTime() {
             </View>
           </View>
         </View>
-      </View>
+      </SafeAreaView>
     );
   }
 
   // App Selection Screen (default)
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {/* Title */}
       <View style={styles.titleBox}>
         <Text style={styles.titleText}>Add Limit</Text>
@@ -226,7 +236,7 @@ export default function ScreenTime() {
           </TouchableOpacity>
         ))}
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -234,10 +244,18 @@ export default function ScreenTime() {
 function CircularProgress({ size, strokeWidth, progress, color, bgColor }) {
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference * (1 - Math.max(0, Math.min(progress, 1)));
+  const strokeDashoffset =
+    circumference * (1 - Math.max(0, Math.min(progress, 1)));
 
   return (
-    <View style={{ width: size, height: size, alignItems: "center", justifyContent: "center" }}>
+    <View
+      style={{
+        width: size,
+        height: size,
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
       <Svg width={size} height={size}>
         <Circle
           stroke={bgColor}
