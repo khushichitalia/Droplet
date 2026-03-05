@@ -1,7 +1,7 @@
 import { router } from "expo-router";
 import React, { useState } from "react";
 import { sendPasswordResetEmail } from "firebase/auth";
-import { auth } from "../../lib/firebase";
+//import { auth } from "../../lib/firebase";
 import {
   View,
   Text,

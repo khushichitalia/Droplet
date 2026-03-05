@@ -14,9 +14,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Path, Rect, Defs, ClipPath, G } from "react-native-svg";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
-import { signOut } from "firebase/auth";
-
-import { auth } from "../../lib/firebase";
 
 const AnimatedRect = Animated.createAnimatedComponent(Rect);
 const NAME_STORAGE_KEY = "@droplet/display-name";
@@ -28,8 +25,6 @@ export default function HomePage() {
 
   const [name, setName] = useState("");
   const [showNameModal, setShowNameModal] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
-  const [showChangeName, setShowChangeName] = useState(false);
 
   const fillAnimation = useRef(new Animated.Value(0)).current;
 
@@ -71,19 +66,8 @@ export default function HomePage() {
       await AsyncStorage.setItem(NAME_STORAGE_KEY, trimmedName);
       setName(trimmedName);
       setShowNameModal(false);
-      setShowChangeName(false);
     } catch (error) {
       Alert.alert("Save failed", "Could not save your name right now.");
-    }
-  };
-
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      setShowSettings(false);
-      router.replace("/login");
-    } catch (error) {
-      Alert.alert("Log out failed", error.message);
     }
   };
 
@@ -96,12 +80,10 @@ export default function HomePage() {
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* Settings Button - Navigate to settings page */}
       <TouchableOpacity
         style={styles.gearButton}
-        onPress={() => {
-          setShowSettings(true);
-          setShowChangeName(false);
-        }}
+        onPress={() => router.push("/settings")}
       >
         <Image
           source={require("../../assets/setting.png")}
@@ -169,6 +151,7 @@ export default function HomePage() {
         </View>
       </View>
 
+      {/* Initial Name Modal */}
       <Modal visible={showNameModal} transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
@@ -182,51 +165,6 @@ export default function HomePage() {
             />
             <TouchableOpacity style={styles.modalButton} onPress={saveName}>
               <Text style={styles.modalButtonText}>Continue</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-
-      <Modal visible={showSettings} transparent>
-        <View style={styles.modalOverlay}>
-          <View style={styles.settingsModalCard}>
-            <TouchableOpacity
-              style={[styles.modalButton, { marginBottom: 10 }]}
-              onPress={() => setShowChangeName((prev) => !prev)}
-            >
-              <Text style={styles.modalButtonText}>Edit Name</Text>
-            </TouchableOpacity>
-
-            {showChangeName && (
-              <>
-                <TextInput
-                  style={styles.modalInput}
-                  placeholder="New display name"
-                  placeholderTextColor="white"
-                  value={name}
-                  onChangeText={setName}
-                />
-                <TouchableOpacity
-                  style={[styles.modalButton, { marginBottom: 10 }]}
-                  onPress={saveName}
-                >
-                  <Text style={styles.modalButtonText}>Save</Text>
-                </TouchableOpacity>
-              </>
-            )}
-
-            <TouchableOpacity style={styles.modalButton} onPress={handleLogout}>
-              <Text style={styles.modalButtonText}>Log Out</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.modalButton, { marginTop: 10 }]}
-              onPress={() => {
-                setShowSettings(false);
-                setShowChangeName(false);
-              }}
-            >
-              <Text style={styles.modalButtonText}>Close</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -320,12 +258,6 @@ const styles = StyleSheet.create({
   },
   modalCard: {
     width: "85%",
-    backgroundColor: "#48CAE4",
-    padding: 15,
-    borderRadius: 15,
-  },
-  settingsModalCard: {
-    width: "50%",
     backgroundColor: "#48CAE4",
     padding: 15,
     borderRadius: 15,
