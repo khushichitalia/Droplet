@@ -67,39 +67,32 @@ export default function SettingsPage() {
       [
         { text: "Cancel", style: "cancel" },
         { text: "Tare", onPress: () => console.log("Tare pressed") },
-      ]
+      ],
     );
   };
 
   const handleSleep = () => {
-    Alert.alert(
-      "Sleep Mode",
-      "Put the water bottle into sleep mode?",
-      [
-        { text: "Cancel", style: "cancel" },
-        { text: "Sleep", onPress: () => console.log("Sleep pressed") },
-      ]
-    );
+    Alert.alert("Sleep Mode", "Put the water bottle into sleep mode?", [
+      { text: "Cancel", style: "cancel" },
+      { text: "Sleep", onPress: () => console.log("Sleep pressed") },
+    ]);
   };
 
   const handlePowerOff = () => {
-    Alert.alert(
-      "Power Off",
-      "Turn off the water bottle?",
-      [
-        { text: "Cancel", style: "cancel" },
-        { text: "Power Off", onPress: () => console.log("Power off pressed"), style: "destructive" },
-      ]
-    );
+    Alert.alert("Power Off", "Turn off the water bottle?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Power Off",
+        onPress: () => console.log("Power off pressed"),
+        style: "destructive",
+      },
+    ]);
   };
 
   return (
     <SafeAreaView style={styles.container}>
       {/* Back Button */}
-      <TouchableOpacity 
-        style={styles.backButton}
-        onPress={() => router.back()}
-      >
+      <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
         <Text style={styles.backButtonText}>← Back</Text>
       </TouchableOpacity>
 
@@ -113,7 +106,7 @@ export default function SettingsPage() {
         {/* User Settings Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>User Settings</Text>
-          
+
           <TouchableOpacity
             style={styles.settingButton}
             onPress={() => setShowNameInput(!showNameInput)}
@@ -136,10 +129,7 @@ export default function SettingsPage() {
             </View>
           )}
 
-          <TouchableOpacity
-            style={styles.settingButton}
-            onPress={handleLogout}
-          >
+          <TouchableOpacity style={styles.settingButton} onPress={handleLogout}>
             <Text style={styles.buttonText}>Log Out</Text>
           </TouchableOpacity>
         </View>
@@ -151,17 +141,11 @@ export default function SettingsPage() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Bottle Controls</Text>
 
-          <TouchableOpacity
-            style={styles.settingButton}
-            onPress={handleTare}
-          >
+          <TouchableOpacity style={styles.settingButton} onPress={handleTare}>
             <Text style={styles.buttonText}>Tare</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.settingButton}
-            onPress={handleSleep}
-          >
+          <TouchableOpacity style={styles.settingButton} onPress={handleSleep}>
             <Text style={styles.buttonText}>Sleep</Text>
           </TouchableOpacity>
 

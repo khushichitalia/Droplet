@@ -98,7 +98,7 @@ export default function HomePage() {
     <SafeAreaView style={styles.container}>
       <TouchableOpacity
         style={styles.gearButton}
-        onPress={() => router.push('/settings')}
+        onPress={() => router.push("/settings")}
       >
         <Image
           source={require("../../assets/setting.png")}
