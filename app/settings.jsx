@@ -9,8 +9,9 @@ import {
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { signOut } from "firebase/auth";
-//import { auth } from "../../lib/firebase";
+import { auth } from "../lib/firebase";
 
 const NAME_STORAGE_KEY = "@droplet/display-name";
 
@@ -93,7 +94,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {/* Back Button */}
       <TouchableOpacity 
         style={styles.backButton}
@@ -172,7 +173,7 @@ export default function SettingsPage() {
           </TouchableOpacity>
         </View>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
