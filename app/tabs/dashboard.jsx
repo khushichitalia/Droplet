@@ -15,6 +15,7 @@ export default function Dashboard() {
       1.5, 2.8, 3.0, 2.7, 3.3, 2.9, 3.0, 2.2, 3.1, 3.0, 2.6, 2.9, 3.2, 3.0, 2.5,
       2.7, 3.0, 3.1, 2.8, 3.0, 3.2, 2.9, 2.6, 3.0, 2.7, 3.0, 3.1, 2.8, 3.0, 2.5,
     ],
+    // This will be dynamically calculated for current year
     yearData: [70, 75, 80, 78, 85, 88, 90, 82, 76, 70, 68, 72],
     streak: 3,
   });
@@ -38,9 +39,20 @@ export default function Dashboard() {
   const monthDays = data.monthDays || [];
   const yearData = data.yearData || [];
 
+  // Calculate which months to show in year view
+  const currentMonth = new Date().getMonth(); // 0-11
+  const currentDayOfMonth = new Date().getDate();
+  const daysInCurrentMonth = new Date(new Date().getFullYear(), currentMonth + 1, 0).getDate();
+  
+  // Only show months up to and including current month
+  const displayedYearData = yearData.slice(0, currentMonth + 1);
+  
+  // Calculate current month progress (percentage based on days completed)
+  const currentMonthProgress = (currentDayOfMonth / daysInCurrentMonth) * 100;
+
   let activeData = weekDays;
   if (selected === "Month") activeData = monthDays;
-  if (selected === "Year") activeData = yearData;
+  if (selected === "Year") activeData = displayedYearData;
 
   let activeLabels = [];
   if (activeData.length === 7)
@@ -78,6 +90,7 @@ export default function Dashboard() {
   const isFutureDay = isCurrentMonth && selectedDay > today.getDate() - 1;
   const selectedDayValue = monthDaysDaily[selectedDay];
   const hasData = typeof selectedDayValue === "number";
+  
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.card}>
@@ -203,7 +216,7 @@ export default function Dashboard() {
                     frontColor: val >= perDayGoal ? "#073B66" : "#8EBDE0",
                   }))}
                   barWidth={16}
-                  spacing={16}
+                  spacing={10}
                   noOfSections={4}
                   maxValue={4}
                   yAxisThickness={0}
@@ -221,7 +234,7 @@ export default function Dashboard() {
                   }}
                   barBorderRadius={8}
                   height={150}
-                  width={280}
+                  width={260}
                   showGradient={false}
                   backgroundColor="transparent"
                   rulesType="solid"
@@ -229,8 +242,8 @@ export default function Dashboard() {
                   rulesThickness={1}
                   hideRules={false}
                   yAxisLabelSuffix=" L"
-                  initialSpacing={10}
-                  endSpacing={10}
+                  initialSpacing={8}
+                  endSpacing={8}
                 />
               </View>
             </View>
@@ -244,7 +257,7 @@ export default function Dashboard() {
                 {(() => {
                   const now = new Date();
                   const year = now.getFullYear();
-                  const month = now.getMonth(); // 0-based
+                  const month = now.getMonth();
                   const daysInMonth = new Date(year, month + 1, 0).getDate();
                   const todayIndex = isCurrentMonth ? today.getDate() - 1 : -1;
 
@@ -309,7 +322,7 @@ export default function Dashboard() {
                   <View style={styles.selectedDayPill}>
                     <Text
                       style={styles.selectedDayText}
-                    >{`Feb ${selectedDay + 1}`}</Text>
+                    >{`${monthName.slice(0, 3)} ${selectedDay + 1}`}</Text>
                   </View>
 
                   <View style={styles.dayDetails}>
@@ -337,24 +350,20 @@ export default function Dashboard() {
 
           {selected === "Year" && (
             <View style={styles.yearArea}>
-              <Text style={styles.monthTitle}>Year</Text>
+              <Text style={styles.monthTitle}>Year {new Date().getFullYear()}</Text>
               <View style={styles.yearGrid}>
-                {yearData.map((val, i) => {
+                {displayedYearData.map((val, i) => {
                   const months = [
-                    "Jan",
-                    "Feb",
-                    "Mar",
-                    "Apr",
-                    "May",
-                    "Jun",
-                    "Jul",
-                    "Aug",
-                    "Sep",
-                    "Oct",
-                    "Nov",
-                    "Dec",
+                    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
                   ];
-                  const pct = Math.max(0, Math.min(1, val / 100));
+                  
+                  // For current month, use actual progress based on days elapsed
+                  const isCurrentMonthCircle = i === currentMonth;
+                  const pct = isCurrentMonthCircle 
+                    ? currentMonthProgress / 100 
+                    : Math.max(0, Math.min(1, val / 100));
+                  
                   return (
                     <View key={i} style={styles.yearItem}>
                       <CircularProgress
@@ -726,8 +735,8 @@ const styles = StyleSheet.create({
     width: 34,
     height: 26,
     borderRadius: 6,
-    borderWidth: 3, // ALWAYS present
-    borderColor: "transparent", // invisible unless selected
+    borderWidth: 3,
+    borderColor: "transparent",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -798,7 +807,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   yearItem: {
-    width: "24%",
+    width: "0%",
     alignItems: "center",
     marginBottom: 18,
   },
