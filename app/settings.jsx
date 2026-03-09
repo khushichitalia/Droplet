@@ -34,8 +34,10 @@ export default function SettingsPage() {
       const savedName = await AsyncStorage.getItem(NAME_STORAGE_KEY);
       const savedGoal = await AsyncStorage.getItem(GOAL_STORAGE_KEY);
       const savedGoalUnit = await AsyncStorage.getItem(GOAL_UNIT_STORAGE_KEY);
-      const savedBottleName = await AsyncStorage.getItem(BOTTLE_NAME_STORAGE_KEY);
-      
+      const savedBottleName = await AsyncStorage.getItem(
+        BOTTLE_NAME_STORAGE_KEY,
+      );
+
       if (savedName) setName(savedName);
       if (savedGoal) setGoal(savedGoal);
       if (savedGoalUnit) setGoalUnit(savedGoalUnit);
@@ -69,7 +71,10 @@ export default function SettingsPage() {
   const saveGoal = async () => {
     const goalNumber = parseInt(goal);
     if (isNaN(goalNumber) || goalNumber <= 0) {
-      Alert.alert("Invalid Goal", "Please enter a valid number greater than 0.");
+      Alert.alert(
+        "Invalid Goal",
+        "Please enter a valid number greater than 0.",
+      );
       return;
     }
 
@@ -116,39 +121,32 @@ export default function SettingsPage() {
       [
         { text: "Cancel", style: "cancel" },
         { text: "Tare", onPress: () => console.log("Tare pressed") },
-      ]
+      ],
     );
   };
 
   const handleSleep = () => {
-    Alert.alert(
-      "Sleep Mode",
-      "Put the water bottle into sleep mode?",
-      [
-        { text: "Cancel", style: "cancel" },
-        { text: "Sleep", onPress: () => console.log("Sleep pressed") },
-      ]
-    );
+    Alert.alert("Sleep Mode", "Put the water bottle into sleep mode?", [
+      { text: "Cancel", style: "cancel" },
+      { text: "Sleep", onPress: () => console.log("Sleep pressed") },
+    ]);
   };
 
   const handlePowerOff = () => {
-    Alert.alert(
-      "Power Off",
-      "Turn off the water bottle?",
-      [
-        { text: "Cancel", style: "cancel" },
-        { text: "Power Off", onPress: () => console.log("Power off pressed"), style: "destructive" },
-      ]
-    );
+    Alert.alert("Power Off", "Turn off the water bottle?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Power Off",
+        onPress: () => console.log("Power off pressed"),
+        style: "destructive",
+      },
+    ]);
   };
 
   return (
     <View style={styles.container}>
       {/* Back Button */}
-      <TouchableOpacity 
-        style={styles.backButton}
-        onPress={() => router.back()}
-      >
+      <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
         <Text style={styles.backButtonText}>← Back</Text>
       </TouchableOpacity>
 
@@ -162,7 +160,7 @@ export default function SettingsPage() {
         {/* User Settings Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>User Settings</Text>
-          
+
           <TouchableOpacity
             style={styles.settingButton}
             onPress={() => setShowNameInput(!showNameInput)}
@@ -211,7 +209,7 @@ export default function SettingsPage() {
                   <Text style={styles.unitPickerArrow}>▼</Text>
                 </TouchableOpacity>
               </View>
-              
+
               {showUnitPicker && (
                 <View style={styles.unitDropdown}>
                   {units.map((unit) => (
@@ -238,10 +236,7 @@ export default function SettingsPage() {
             </View>
           )}
 
-          <TouchableOpacity
-            style={styles.settingButton}
-            onPress={handleLogout}
-          >
+          <TouchableOpacity style={styles.settingButton} onPress={handleLogout}>
             <Text style={styles.buttonText}>Log Out</Text>
           </TouchableOpacity>
         </View>
@@ -269,23 +264,20 @@ export default function SettingsPage() {
                 value={bottleName}
                 onChangeText={setBottleName}
               />
-              <TouchableOpacity style={styles.saveButton} onPress={saveBottleName}>
+              <TouchableOpacity
+                style={styles.saveButton}
+                onPress={saveBottleName}
+              >
                 <Text style={styles.saveButtonText}>Save</Text>
               </TouchableOpacity>
             </View>
           )}
 
-          <TouchableOpacity
-            style={styles.settingButton}
-            onPress={handleTare}
-          >
+          <TouchableOpacity style={styles.settingButton} onPress={handleTare}>
             <Text style={styles.buttonText}>Tare</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.settingButton}
-            onPress={handleSleep}
-          >
+          <TouchableOpacity style={styles.settingButton} onPress={handleSleep}>
             <Text style={styles.buttonText}>Sleep</Text>
           </TouchableOpacity>
 

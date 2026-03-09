@@ -19,7 +19,7 @@ export default function Index() {
     try {
       // Check if user is logged in
       const user = auth.currentUser;
-      
+
       if (!user) {
         // Not logged in, redirect to login
         setIsAuthenticated(false);
@@ -30,8 +30,10 @@ export default function Index() {
       setIsAuthenticated(true);
 
       // Check if onboarding is complete
-      const onboardingComplete = await AsyncStorage.getItem(ONBOARDING_COMPLETE_KEY);
-      
+      const onboardingComplete = await AsyncStorage.getItem(
+        ONBOARDING_COMPLETE_KEY,
+      );
+
       if (!onboardingComplete) {
         // User is logged in but hasn't completed onboarding
         setNeedsOnboarding(true);
