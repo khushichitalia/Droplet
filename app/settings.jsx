@@ -10,7 +10,7 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import { signOut } from "firebase/auth";
-//import { auth } from "../../lib/firebase";
+import { auth } from "../lib/firebase";
 
 const NAME_STORAGE_KEY = "@droplet/display-name";
 const GOAL_STORAGE_KEY = "@droplet/daily-goal";
