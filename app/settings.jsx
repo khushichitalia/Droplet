@@ -9,29 +9,46 @@ import {
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { signOut } from "firebase/auth";
 import { auth } from "../lib/firebase";
 
 const NAME_STORAGE_KEY = "@droplet/display-name";
+const GOAL_STORAGE_KEY = "@droplet/daily-goal";
+const GOAL_UNIT_STORAGE_KEY = "@droplet/daily-goal-unit";
+const BOTTLE_NAME_STORAGE_KEY = "@droplet/bottle-name";
 
 export default function SettingsPage() {
   const [name, setName] = useState("");
   const [showNameInput, setShowNameInput] = useState(false);
+  const [goal, setGoal] = useState("80");
+  const [goalUnit, setGoalUnit] = useState("oz");
+  const [showGoalInput, setShowGoalInput] = useState(false);
+  const [showUnitPicker, setShowUnitPicker] = useState(false);
+  const [bottleName, setBottleName] = useState("");
+  const [showBottleNameInput, setShowBottleNameInput] = useState(false);
 
-  const loadName = async () => {
+  const units = ["oz", "ml", "L", "gal", "cups"];
+
+  const loadUserData = async () => {
     try {
       const savedName = await AsyncStorage.getItem(NAME_STORAGE_KEY);
-      if (savedName) {
-        setName(savedName);
-      }
+      const savedGoal = await AsyncStorage.getItem(GOAL_STORAGE_KEY);
+      const savedGoalUnit = await AsyncStorage.getItem(GOAL_UNIT_STORAGE_KEY);
+      const savedBottleName = await AsyncStorage.getItem(
+        BOTTLE_NAME_STORAGE_KEY,
+      );
+
+      if (savedName) setName(savedName);
+      if (savedGoal) setGoal(savedGoal);
+      if (savedGoalUnit) setGoalUnit(savedGoalUnit);
+      if (savedBottleName) setBottleName(savedBottleName);
     } catch (error) {
-      console.log("Failed to load name", error);
+      console.log("Failed to load user data", error);
     }
   };
 
   React.useEffect(() => {
-    loadName();
+    loadUserData();
   }, []);
 
   const saveName = async () => {
@@ -48,6 +65,43 @@ export default function SettingsPage() {
       Alert.alert("Success", "Name updated!");
     } catch (error) {
       Alert.alert("Save failed", "Could not save your name right now.");
+    }
+  };
+
+  const saveGoal = async () => {
+    const goalNumber = parseInt(goal);
+    if (isNaN(goalNumber) || goalNumber <= 0) {
+      Alert.alert(
+        "Invalid Goal",
+        "Please enter a valid number greater than 0.",
+      );
+      return;
+    }
+
+    try {
+      await AsyncStorage.setItem(GOAL_STORAGE_KEY, goal);
+      await AsyncStorage.setItem(GOAL_UNIT_STORAGE_KEY, goalUnit);
+      setShowGoalInput(false);
+      Alert.alert("Success", `Daily goal updated to ${goal} ${goalUnit}!`);
+    } catch (error) {
+      Alert.alert("Save failed", "Could not save your goal right now.");
+    }
+  };
+
+  const saveBottleName = async () => {
+    const trimmedBottleName = bottleName.trim();
+    if (!trimmedBottleName) {
+      Alert.alert("Name required", "Please enter a bottle name.");
+      return;
+    }
+
+    try {
+      await AsyncStorage.setItem(BOTTLE_NAME_STORAGE_KEY, trimmedBottleName);
+      setBottleName(trimmedBottleName);
+      setShowBottleNameInput(false);
+      Alert.alert("Success", "Bottle name updated!");
+    } catch (error) {
+      Alert.alert("Save failed", "Could not save bottle name right now.");
     }
   };
 
@@ -90,7 +144,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       {/* Back Button */}
       <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
         <Text style={styles.backButtonText}>← Back</Text>
@@ -129,6 +183,59 @@ export default function SettingsPage() {
             </View>
           )}
 
+          <TouchableOpacity
+            style={styles.settingButton}
+            onPress={() => setShowGoalInput(!showGoalInput)}
+          >
+            <Text style={styles.buttonText}>Edit Daily Goal</Text>
+          </TouchableOpacity>
+
+          {showGoalInput && (
+            <View style={styles.nameInputContainer}>
+              <View style={styles.goalInputRow}>
+                <TextInput
+                  style={[styles.nameInput, styles.goalNumberInput]}
+                  placeholder="Enter goal"
+                  placeholderTextColor="#999"
+                  value={goal}
+                  onChangeText={setGoal}
+                  keyboardType="numeric"
+                />
+                <TouchableOpacity
+                  style={styles.unitPicker}
+                  onPress={() => setShowUnitPicker(!showUnitPicker)}
+                >
+                  <Text style={styles.unitPickerText}>{goalUnit}</Text>
+                  <Text style={styles.unitPickerArrow}>▼</Text>
+                </TouchableOpacity>
+              </View>
+
+              {showUnitPicker && (
+                <View style={styles.unitDropdown}>
+                  {units.map((unit) => (
+                    <TouchableOpacity
+                      key={unit}
+                      style={[
+                        styles.unitOption,
+                        goalUnit === unit && styles.unitOptionSelected,
+                      ]}
+                      onPress={() => {
+                        setGoalUnit(unit);
+                        setShowUnitPicker(false);
+                      }}
+                    >
+                      <Text style={styles.unitOptionText}>{unit}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+
+              <TouchableOpacity style={styles.saveButton} onPress={saveGoal}>
+                <Text style={styles.saveButtonText}>Save</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
           <TouchableOpacity style={styles.settingButton} onPress={handleLogout}>
             <Text style={styles.buttonText}>Log Out</Text>
           </TouchableOpacity>
@@ -139,7 +246,32 @@ export default function SettingsPage() {
 
         {/* Bottle Controls Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Bottle Controls</Text>
+          <Text style={styles.sectionTitle}>Bottle Settings</Text>
+
+          <TouchableOpacity
+            style={styles.settingButton}
+            onPress={() => setShowBottleNameInput(!showBottleNameInput)}
+          >
+            <Text style={styles.buttonText}>Edit Bottle Name</Text>
+          </TouchableOpacity>
+
+          {showBottleNameInput && (
+            <View style={styles.nameInputContainer}>
+              <TextInput
+                style={styles.nameInput}
+                placeholder="Enter bottle name"
+                placeholderTextColor="#999"
+                value={bottleName}
+                onChangeText={setBottleName}
+              />
+              <TouchableOpacity
+                style={styles.saveButton}
+                onPress={saveBottleName}
+              >
+                <Text style={styles.saveButtonText}>Save</Text>
+              </TouchableOpacity>
+            </View>
+          )}
 
           <TouchableOpacity style={styles.settingButton} onPress={handleTare}>
             <Text style={styles.buttonText}>Tare</Text>
@@ -157,7 +289,7 @@ export default function SettingsPage() {
           </TouchableOpacity>
         </View>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -247,5 +379,56 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 16,
     fontWeight: "bold",
+  },
+  goalInputRow: {
+    flexDirection: "row",
+    gap: 10,
+    marginBottom: 10,
+  },
+  goalNumberInput: {
+    flex: 1,
+    marginBottom: 0,
+  },
+  unitPicker: {
+    backgroundColor: "white",
+    borderRadius: 8,
+    padding: 12,
+    borderWidth: 2,
+    borderColor: "#6FE3F0",
+    width: 80,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  unitPickerText: {
+    fontSize: 16,
+    color: "#003B8E",
+    fontWeight: "bold",
+  },
+  unitPickerArrow: {
+    fontSize: 12,
+    color: "#003B8E",
+  },
+  unitDropdown: {
+    backgroundColor: "white",
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: "#6FE3F0",
+    marginBottom: 10,
+    overflow: "hidden",
+  },
+  unitOption: {
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E0E0E0",
+  },
+  unitOptionSelected: {
+    backgroundColor: "#00B4D8",
+  },
+  unitOptionText: {
+    fontSize: 16,
+    color: "#003B8E",
+    fontWeight: "600",
+    textAlign: "center",
   },
 });

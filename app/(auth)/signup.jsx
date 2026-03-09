@@ -28,7 +28,7 @@ export default function SignupScreen({ navigation }) {
 
     try {
       await createUserWithEmailAndPassword(auth, email.trim(), password);
-      router.replace("/tabs/homepage");
+      router.replace("/");
     } catch (error) {
       alert(error.message);
     }
