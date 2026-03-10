@@ -100,9 +100,9 @@ export default function AddFountainModal({
             {selectedLocation && (
               <Marker coordinate={selectedLocation}>
                 <MaterialCommunityIcons
-                  name="water-pump"
-                  size={32}
-                  color="#2196F3"
+                  name="map-marker"
+                  size={40}
+                  color="#023E8A"
                 />
               </Marker>
             )}
@@ -114,6 +114,7 @@ export default function AddFountainModal({
           <TextInput
             style={styles.input}
             placeholder="e.g., Library Water Fountain"
+            placeholderTextColor="#635f5f"
             value={name}
             onChangeText={setName}
             maxLength={100}
@@ -222,7 +223,7 @@ const styles = StyleSheet.create({
     color: "#666",
   },
   submitButton: {
-    backgroundColor: "#2196F3",
+    backgroundColor: "#023E8A",
   },
   submitButtonText: {
     fontSize: 16,
