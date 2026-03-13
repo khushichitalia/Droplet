@@ -45,7 +45,6 @@ export default function SettingsPage() {
     if (Platform.OS !== 'web') {
       loadBatteryInfo();
       
-      // Subscribe to battery updates
       const subscription = Battery.addBatteryLevelListener(({ batteryLevel }) => {
         setBatteryLevel(batteryLevel);
       });
