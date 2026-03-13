@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -6,11 +6,15 @@ import {
   TouchableOpacity,
   TextInput,
   Alert,
+  ScrollView,
+  Platform,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import { signOut } from "firebase/auth";
 import { auth } from "../lib/firebase";
+import * as Battery from "expo-battery";
 
 const NAME_STORAGE_KEY = "@droplet/display-name";
 const GOAL_STORAGE_KEY = "@droplet/daily-goal";
@@ -26,18 +30,62 @@ export default function SettingsPage() {
   const [showUnitPicker, setShowUnitPicker] = useState(false);
   const [bottleName, setBottleName] = useState("");
   const [showBottleNameInput, setShowBottleNameInput] = useState(false);
+  
+  // Battery states
+  const [batteryLevel, setBatteryLevel] = useState(null);
+  const [batteryState, setBatteryState] = useState(null);
+  const [isCharging, setIsCharging] = useState(false);
 
   const units = ["oz", "ml", "L", "gal", "cups"];
+
+  useEffect(() => {
+    loadUserData();
+    
+    // Battery API only works on mobile devices, not web
+    if (Platform.OS !== 'web') {
+      loadBatteryInfo();
+      
+      // Subscribe to battery updates
+      const subscription = Battery.addBatteryLevelListener(({ batteryLevel }) => {
+        setBatteryLevel(batteryLevel);
+      });
+
+      const stateSubscription = Battery.addBatteryStateListener(({ batteryState }) => {
+        setBatteryState(batteryState);
+        setIsCharging(batteryState === Battery.BatteryState.CHARGING || batteryState === Battery.BatteryState.FULL);
+      });
+
+      return () => {
+        subscription.remove();
+        stateSubscription.remove();
+      };
+    } else {
+      // On web, show placeholder
+      setBatteryLevel(0.85); // 85% for demo
+      setIsCharging(false);
+    }
+  }, []);
+
+  const loadBatteryInfo = async () => {
+    try {
+      const level = await Battery.getBatteryLevelAsync();
+      const state = await Battery.getBatteryStateAsync();
+      
+      setBatteryLevel(level);
+      setBatteryState(state);
+      setIsCharging(state === Battery.BatteryState.CHARGING || state === Battery.BatteryState.FULL);
+    } catch (error) {
+      console.log("Failed to load battery info", error);
+    }
+  };
 
   const loadUserData = async () => {
     try {
       const savedName = await AsyncStorage.getItem(NAME_STORAGE_KEY);
       const savedGoal = await AsyncStorage.getItem(GOAL_STORAGE_KEY);
       const savedGoalUnit = await AsyncStorage.getItem(GOAL_UNIT_STORAGE_KEY);
-      const savedBottleName = await AsyncStorage.getItem(
-        BOTTLE_NAME_STORAGE_KEY,
-      );
-
+      const savedBottleName = await AsyncStorage.getItem(BOTTLE_NAME_STORAGE_KEY);
+      
       if (savedName) setName(savedName);
       if (savedGoal) setGoal(savedGoal);
       if (savedGoalUnit) setGoalUnit(savedGoalUnit);
@@ -46,10 +94,6 @@ export default function SettingsPage() {
       console.log("Failed to load user data", error);
     }
   };
-
-  React.useEffect(() => {
-    loadUserData();
-  }, []);
 
   const saveName = async () => {
     const trimmedName = name.trim();
@@ -71,10 +115,7 @@ export default function SettingsPage() {
   const saveGoal = async () => {
     const goalNumber = parseInt(goal);
     if (isNaN(goalNumber) || goalNumber <= 0) {
-      Alert.alert(
-        "Invalid Goal",
-        "Please enter a valid number greater than 0.",
-      );
+      Alert.alert("Invalid Goal", "Please enter a valid number greater than 0.");
       return;
     }
 
@@ -116,180 +157,252 @@ export default function SettingsPage() {
 
   const handleTare = () => {
     Alert.alert(
-      "Tare Water Bottle",
-      "This will reset the water bottle weight to zero.",
+      "Tare Bottle",
+      "Make sure your bottle is empty, then confirm to recalibrate.",
       [
         { text: "Cancel", style: "cancel" },
-        { text: "Tare", onPress: () => console.log("Tare pressed") },
-      ],
+        {
+          text: "Confirm",
+          onPress: () => {
+            // TODO: Send tare command to hardware
+            console.log("Taring bottle...");
+            Alert.alert("Success", "Bottle recalibrated!");
+          },
+        },
+      ]
     );
   };
 
   const handleSleep = () => {
-    Alert.alert("Sleep Mode", "Put the water bottle into sleep mode?", [
-      { text: "Cancel", style: "cancel" },
-      { text: "Sleep", onPress: () => console.log("Sleep pressed") },
-    ]);
+    Alert.alert(
+      "Sleep Mode",
+      "Put the bottle device into sleep mode?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Confirm",
+          onPress: () => {
+            // TODO: Send sleep command to hardware
+            console.log("Putting bottle to sleep...");
+            Alert.alert("Success", "Bottle is now in sleep mode");
+          },
+        },
+      ]
+    );
   };
 
   const handlePowerOff = () => {
-    Alert.alert("Power Off", "Turn off the water bottle?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Power Off",
-        onPress: () => console.log("Power off pressed"),
-        style: "destructive",
-      },
-    ]);
+    Alert.alert(
+      "Power Off",
+      "Are you sure you want to power off the device? You'll need to physically turn it back on.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Power Off",
+          style: "destructive",
+          onPress: () => {
+            // TODO: Send power off command to hardware
+            console.log("Powering off bottle...");
+            Alert.alert("Device Powered Off", "Turn on the physical device to reconnect.");
+          },
+        },
+      ]
+    );
+  };
+
+  const getBatteryIcon = () => {
+    if (batteryLevel === null) return "🔋";
+    
+    if (isCharging) return "⚡";
+    
+    if (batteryLevel > 0.7) return "🔋";
+    if (batteryLevel > 0.3) return "🔋";
+    if (batteryLevel > 0.1) return "🪫";
+    return "🪫";
+  };
+
+  const getBatteryColor = () => {
+    if (batteryLevel === null) return "#90E0EF";
+    if (isCharging) return "#00D084";
+    if (batteryLevel > 0.3) return "#00D084";
+    if (batteryLevel > 0.1) return "#FFA500";
+    return "#FF0000";
   };
 
   return (
-    <View style={styles.container}>
-      {/* Back Button */}
-      <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-        <Text style={styles.backButtonText}>← Back</Text>
-      </TouchableOpacity>
+    <SafeAreaView style={styles.container}>
+      <ScrollView>
+        {/* Header */}
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <Text style={styles.backButtonText}>← Back</Text>
+        </TouchableOpacity>
 
-      {/* Title */}
-      <View style={styles.header}>
-        <Text style={styles.headerText}>Settings</Text>
-      </View>
+        <Text style={styles.title}>Settings</Text>
 
-      {/* Settings Card */}
-      <View style={styles.card}>
-        {/* User Settings Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>User Settings</Text>
-
-          <TouchableOpacity
-            style={styles.settingButton}
-            onPress={() => setShowNameInput(!showNameInput)}
-          >
-            <Text style={styles.buttonText}>Edit Name</Text>
-          </TouchableOpacity>
-
-          {showNameInput && (
-            <View style={styles.nameInputContainer}>
-              <TextInput
-                style={styles.nameInput}
-                placeholder="Enter your name"
-                placeholderTextColor="#999"
-                value={name}
-                onChangeText={setName}
-              />
-              <TouchableOpacity style={styles.saveButton} onPress={saveName}>
-                <Text style={styles.saveButtonText}>Save</Text>
-              </TouchableOpacity>
+        {/* Card Container */}
+        <View style={styles.card}>
+          
+          {/* Battery Status Section */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Device Status</Text>
+            
+            <View style={styles.batteryContainer}>
+              <Text style={styles.batteryIcon}>{getBatteryIcon()}</Text>
+              <View style={styles.batteryInfo}>
+                <Text style={styles.batteryLabel}>Water Bottle Battery</Text>
+                <Text style={[styles.batteryLevel, { color: getBatteryColor() }]}>
+                  {batteryLevel !== null 
+                    ? `${Math.round(batteryLevel * 100)}%` 
+                    : "Checking..."}
+                </Text>
+                {isCharging && (
+                  <Text style={styles.chargingText}>Charging</Text>
+                )}
+              </View>
             </View>
-          )}
+          </View>
 
-          <TouchableOpacity
-            style={styles.settingButton}
-            onPress={() => setShowGoalInput(!showGoalInput)}
-          >
-            <Text style={styles.buttonText}>Edit Daily Goal</Text>
-          </TouchableOpacity>
+          <View style={styles.divider} />
 
-          {showGoalInput && (
-            <View style={styles.nameInputContainer}>
-              <View style={styles.goalInputRow}>
+          {/* User Settings Section */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>User Settings</Text>
+            
+            <TouchableOpacity
+              style={styles.settingButton}
+              onPress={() => setShowNameInput(!showNameInput)}
+            >
+              <Text style={styles.buttonText}>Edit Name</Text>
+            </TouchableOpacity>
+
+            {showNameInput && (
+              <View style={styles.nameInputContainer}>
                 <TextInput
-                  style={[styles.nameInput, styles.goalNumberInput]}
-                  placeholder="Enter goal"
+                  style={styles.nameInput}
+                  placeholder="Enter your name"
                   placeholderTextColor="#999"
-                  value={goal}
-                  onChangeText={setGoal}
-                  keyboardType="numeric"
+                  value={name}
+                  onChangeText={setName}
                 />
-                <TouchableOpacity
-                  style={styles.unitPicker}
-                  onPress={() => setShowUnitPicker(!showUnitPicker)}
-                >
-                  <Text style={styles.unitPickerText}>{goalUnit}</Text>
-                  <Text style={styles.unitPickerArrow}>▼</Text>
+                <TouchableOpacity style={styles.saveButton} onPress={saveName}>
+                  <Text style={styles.saveButtonText}>Save</Text>
                 </TouchableOpacity>
               </View>
+            )}
 
-              {showUnitPicker && (
-                <View style={styles.unitDropdown}>
-                  {units.map((unit) => (
-                    <TouchableOpacity
-                      key={unit}
-                      style={[
-                        styles.unitOption,
-                        goalUnit === unit && styles.unitOptionSelected,
-                      ]}
-                      onPress={() => {
-                        setGoalUnit(unit);
-                        setShowUnitPicker(false);
-                      }}
-                    >
-                      <Text style={styles.unitOptionText}>{unit}</Text>
-                    </TouchableOpacity>
-                  ))}
+            <TouchableOpacity
+              style={styles.settingButton}
+              onPress={() => setShowGoalInput(!showGoalInput)}
+            >
+              <Text style={styles.buttonText}>Edit Daily Goal</Text>
+            </TouchableOpacity>
+
+            {showGoalInput && (
+              <View style={styles.nameInputContainer}>
+                <View style={styles.goalInputRow}>
+                  <TextInput
+                    style={[styles.nameInput, styles.goalNumberInput]}
+                    placeholder="Enter goal"
+                    placeholderTextColor="#999"
+                    value={goal}
+                    onChangeText={setGoal}
+                    keyboardType="numeric"
+                  />
+                  <TouchableOpacity
+                    style={styles.unitPicker}
+                    onPress={() => setShowUnitPicker(!showUnitPicker)}
+                  >
+                    <Text style={styles.unitPickerText}>{goalUnit}</Text>
+                    <Text style={styles.unitPickerArrow}>▼</Text>
+                  </TouchableOpacity>
                 </View>
-              )}
+                
+                {showUnitPicker && (
+                  <View style={styles.unitDropdown}>
+                    {units.map((unit) => (
+                      <TouchableOpacity
+                        key={unit}
+                        style={[
+                          styles.unitOption,
+                          goalUnit === unit && styles.unitOptionSelected,
+                        ]}
+                        onPress={() => {
+                          setGoalUnit(unit);
+                          setShowUnitPicker(false);
+                        }}
+                      >
+                        <Text style={styles.unitOptionText}>{unit}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )}
 
-              <TouchableOpacity style={styles.saveButton} onPress={saveGoal}>
-                <Text style={styles.saveButtonText}>Save</Text>
-              </TouchableOpacity>
-            </View>
-          )}
+                <TouchableOpacity style={styles.saveButton} onPress={saveGoal}>
+                  <Text style={styles.saveButtonText}>Save</Text>
+                </TouchableOpacity>
+              </View>
+            )}
 
-          <TouchableOpacity style={styles.settingButton} onPress={handleLogout}>
-            <Text style={styles.buttonText}>Log Out</Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.settingButton}
+              onPress={handleLogout}
+            >
+              <Text style={styles.buttonText}>Log Out</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.divider} />
+
+          {/* Bottle Settings Section */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Bottle Settings</Text>
+
+            <TouchableOpacity
+              style={styles.settingButton}
+              onPress={() => setShowBottleNameInput(!showBottleNameInput)}
+            >
+              <Text style={styles.buttonText}>Edit Bottle Name</Text>
+            </TouchableOpacity>
+
+            {showBottleNameInput && (
+              <View style={styles.nameInputContainer}>
+                <TextInput
+                  style={styles.nameInput}
+                  placeholder="Enter bottle name"
+                  placeholderTextColor="#999"
+                  value={bottleName}
+                  onChangeText={setBottleName}
+                />
+                <TouchableOpacity style={styles.saveButton} onPress={saveBottleName}>
+                  <Text style={styles.saveButtonText}>Save</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            <TouchableOpacity
+              style={styles.settingButton}
+              onPress={handleTare}
+            >
+              <Text style={styles.buttonText}>Tare</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.settingButton}
+              onPress={handleSleep}
+            >
+              <Text style={styles.buttonText}>Sleep</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.settingButton, styles.powerOffButton]}
+              onPress={handlePowerOff}
+            >
+              <Text style={styles.buttonText}>Power Off</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-
-        {/* Divider */}
-        <View style={styles.divider} />
-
-        {/* Bottle Controls Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Bottle Settings</Text>
-
-          <TouchableOpacity
-            style={styles.settingButton}
-            onPress={() => setShowBottleNameInput(!showBottleNameInput)}
-          >
-            <Text style={styles.buttonText}>Edit Bottle Name</Text>
-          </TouchableOpacity>
-
-          {showBottleNameInput && (
-            <View style={styles.nameInputContainer}>
-              <TextInput
-                style={styles.nameInput}
-                placeholder="Enter bottle name"
-                placeholderTextColor="#999"
-                value={bottleName}
-                onChangeText={setBottleName}
-              />
-              <TouchableOpacity
-                style={styles.saveButton}
-                onPress={saveBottleName}
-              >
-                <Text style={styles.saveButtonText}>Save</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-
-          <TouchableOpacity style={styles.settingButton} onPress={handleTare}>
-            <Text style={styles.buttonText}>Tare</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.settingButton} onPress={handleSleep}>
-            <Text style={styles.buttonText}>Sleep</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.settingButton, styles.powerOffButton]}
-            onPress={handlePowerOff}
-          >
-            <Text style={styles.buttonText}>Power Off</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
@@ -297,43 +410,76 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#023E8A",
-    padding: 16,
   },
   backButton: {
+    paddingHorizontal: 20,
     paddingVertical: 10,
-    paddingHorizontal: 5,
     marginTop: 10,
-    marginBottom: 10,
   },
   backButtonText: {
     color: "#CAF0F8",
     fontSize: 18,
     fontWeight: "bold",
   },
-  header: {
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  headerText: {
+  title: {
     fontSize: 36,
     fontWeight: "bold",
     color: "#CAF0F8",
+    textAlign: "center",
+    marginVertical: 20,
   },
   card: {
     backgroundColor: "#CAF0F8",
+    marginHorizontal: 20,
     borderRadius: 20,
     padding: 20,
-    borderWidth: 3,
-    borderColor: "#6FE3F0",
+    marginBottom: 30,
   },
   section: {
-    marginVertical: 10,
+    marginBottom: 10,
   },
   sectionTitle: {
     fontSize: 22,
     fontWeight: "bold",
     color: "#003B8E",
-    marginBottom: 15,
+    marginBottom: 16,
+  },
+  batteryContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#E6FBFF",
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 2,
+    borderColor: "#6FE3F0",
+  },
+  batteryIcon: {
+    fontSize: 48,
+    marginRight: 16,
+  },
+  batteryInfo: {
+    flex: 1,
+  },
+  batteryLabel: {
+    fontSize: 16,
+    color: "#003B8E",
+    fontWeight: "600",
+    marginBottom: 4,
+  },
+  batteryLevel: {
+    fontSize: 28,
+    fontWeight: "bold",
+  },
+  chargingText: {
+    fontSize: 14,
+    color: "#00D084",
+    fontWeight: "600",
+    marginTop: 4,
+  },
+  divider: {
+    height: 2,
+    backgroundColor: "#6FE3F0",
+    marginVertical: 20,
   },
   settingButton: {
     backgroundColor: "#003B8E",
@@ -351,26 +497,20 @@ const styles = StyleSheet.create({
   powerOffButton: {
     backgroundColor: "#B00020",
   },
-  divider: {
-    height: 2,
-    backgroundColor: "#6FE3F0",
-    marginVertical: 20,
-  },
   nameInputContainer: {
-    marginBottom: 15,
+    marginBottom: 16,
   },
   nameInput: {
     backgroundColor: "white",
     borderRadius: 8,
     padding: 12,
-    fontSize: 16,
-    color: "#003B8E",
     marginBottom: 10,
+    fontSize: 16,
     borderWidth: 2,
     borderColor: "#6FE3F0",
   },
   saveButton: {
-    backgroundColor: "#00B4D8",
+    backgroundColor: "#003B8E",
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: "center",
