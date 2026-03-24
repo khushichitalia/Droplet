@@ -14,7 +14,13 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import { signOut } from "firebase/auth";
 import { auth } from "../lib/firebase";
-import * as Battery from "expo-battery";
+
+let Battery = null;
+try {
+  Battery = require("expo-battery");
+} catch {
+  Battery = null;
+}
 
 const NAME_STORAGE_KEY = "@droplet/display-name";
 const GOAL_STORAGE_KEY = "@droplet/daily-goal";
@@ -35,6 +41,7 @@ export default function SettingsPage() {
   const [batteryLevel, setBatteryLevel] = useState(null);
   const [batteryState, setBatteryState] = useState(null);
   const [isCharging, setIsCharging] = useState(false);
+  const batteryModuleAvailable = !!Battery;
 
   const units = ["oz", "ml", "L", "gal", "cups"];
 
@@ -42,7 +49,7 @@ export default function SettingsPage() {
     loadUserData();
     
     // Battery API only works on mobile devices, not web
-    if (Platform.OS !== 'web') {
+    if (Platform.OS !== 'web' && batteryModuleAvailable) {
       loadBatteryInfo();
       
       const subscription = Battery.addBatteryLevelListener(({ batteryLevel }) => {
@@ -59,13 +66,15 @@ export default function SettingsPage() {
         stateSubscription.remove();
       };
     } else {
-      // On web, show placeholder
-      setBatteryLevel(0.85); // 85% for demo
+      // Fallback when running on web or when native battery module is unavailable.
+      setBatteryLevel(0.85);
       setIsCharging(false);
     }
-  }, []);
+  }, [batteryModuleAvailable]);
 
   const loadBatteryInfo = async () => {
+    if (!Battery) return;
+
     try {
       const level = await Battery.getBatteryLevelAsync();
       const state = await Battery.getBatteryStateAsync();
@@ -221,6 +230,7 @@ export default function SettingsPage() {
   };
 
   const getBatteryColor = () => {
+    if (!batteryModuleAvailable) return "#999999";
     if (batteryLevel === null) return "#90E0EF";
     if (isCharging) return "#00D084";
     if (batteryLevel > 0.3) return "#00D084";
@@ -250,7 +260,9 @@ export default function SettingsPage() {
               <View style={styles.batteryInfo}>
                 <Text style={styles.batteryLabel}>Water Bottle Battery</Text>
                 <Text style={[styles.batteryLevel, { color: getBatteryColor() }]}>
-                  {batteryLevel !== null 
+                  {!batteryModuleAvailable
+                    ? "Unavailable"
+                    : batteryLevel !== null 
                     ? `${Math.round(batteryLevel * 100)}%` 
                     : "Checking..."}
                 </Text>
@@ -355,6 +367,18 @@ export default function SettingsPage() {
           {/* Bottle Settings Section */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Bottle Settings</Text>
+
+            <TouchableOpacity
+              style={styles.settingButton}
+              onPress={() =>
+                router.push({
+                  pathname: "/onboarding",
+                  params: { reconnect: "1" },
+                })
+              }
+            >
+              <Text style={styles.buttonText}>Connect Bluetooth Device</Text>
+            </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.settingButton}
