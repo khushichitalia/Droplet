@@ -6,17 +6,19 @@ import {
   TouchableOpacity,
   TextInput,
   Alert,
-  Animated,
   Modal,
   Platform,
   Keyboard,
   TouchableWithoutFeedback,
   KeyboardAvoidingView,
   ScrollView,
+  FlatList,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
+import useBLE from "../../lib/useBLE";
 
 const ONBOARDING_COMPLETE_KEY = "@droplet/onboarding-complete";
 const NAME_STORAGE_KEY = "@droplet/display-name";
@@ -25,7 +27,10 @@ const GOAL_UNIT_STORAGE_KEY = "@droplet/daily-goal-unit";
 const BOTTLE_NAME_STORAGE_KEY = "@droplet/bottle-name";
 
 export default function OnboardingFlow() {
-  const [step, setStep] = useState(1);
+  const { reconnect } = useLocalSearchParams();
+  const isReconnectFlow = reconnect === "1";
+
+  const [step, setStep] = useState(isReconnectFlow ? 2 : 1);
   const [name, setName] = useState("");
   const [goal, setGoal] = useState("");
   const [goalUnit, setGoalUnit] = useState("oz");
@@ -36,48 +41,70 @@ export default function OnboardingFlow() {
   const [showWelcome, setShowWelcome] = useState(false);
   const [hasTared, setHasTared] = useState(false);
   const [showTareWarning, setShowTareWarning] = useState(false);
+  const [isOnboardingComplete, setIsOnboardingComplete] = useState(false);
 
-  const scanProgress = useRef(new Animated.Value(0)).current;
-  const waveAnimation = useRef(new Animated.Value(0)).current;
+  const {
+    requestPermissions,
+    scanForPeripherals,
+    allDevices,
+    connectToDevice,
+    connectedDevice,
+  } = useBLE();
 
   const units = ["oz", "ml", "L", "gal", "cups"];
 
-  // Animated wave for scanning
   useEffect(() => {
-    if (isScanning) {
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(waveAnimation, {
-            toValue: 1,
-            duration: 1000,
-            useNativeDriver: false,
-          }),
-          Animated.timing(waveAnimation, {
-            toValue: 0,
-            duration: 1000,
-            useNativeDriver: false,
-          }),
-        ]),
-      ).start();
-    } else {
-      waveAnimation.setValue(0);
-    }
-  }, [isScanning]);
+    const loadOnboardingState = async () => {
+      const onboardingComplete = await AsyncStorage.getItem(
+        ONBOARDING_COMPLETE_KEY,
+      );
+      const hasCompletedOnboarding = !!onboardingComplete;
+      setIsOnboardingComplete(hasCompletedOnboarding);
 
-  const handleScan = () => {
+      if (isReconnectFlow && hasCompletedOnboarding) {
+        setStep(2);
+      }
+    };
+
+    loadOnboardingState();
+  }, [isReconnectFlow]);
+
+  useEffect(() => {
+    if (connectedDevice) {
+      setScanComplete(true);
+      setIsScanning(false);
+    }
+  }, [connectedDevice]);
+
+  const handleScan = async () => {
+    const isPermissionsEnabled = await requestPermissions();
+
+    if (!isPermissionsEnabled) {
+      Alert.alert(
+        "Bluetooth Permission Needed",
+        "Please allow Bluetooth permissions to scan for your water bottle.",
+      );
+      return;
+    }
+
     setIsScanning(true);
     setScanComplete(false);
-    scanProgress.setValue(0);
+    scanForPeripherals();
 
-    // Simulate scanning for 3 seconds
-    Animated.timing(scanProgress, {
-      toValue: 100,
-      duration: 3000,
-      useNativeDriver: false,
-    }).start(() => {
+    setTimeout(() => {
       setIsScanning(false);
-      setScanComplete(true);
-    });
+    }, 8000);
+  };
+
+  const handleConnectDevice = async (device) => {
+    const deviceConnection = await connectToDevice(device);
+
+    if (!deviceConnection) {
+      Alert.alert(
+        "Connection Failed",
+        "Could not connect to that device. Please try again.",
+      );
+    }
   };
 
   const handleTare = () => {
@@ -124,12 +151,9 @@ export default function OnboardingFlow() {
   };
 
   const canProceedStep1 = name.trim() && goal.trim() && parseInt(goal) > 0;
-  const canProceedStep2 = scanComplete && bottleName.trim();
-
-  const waveHeight = waveAnimation.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, 10],
-  });
+  const canProceedStep2 = isReconnectFlow
+    ? !!connectedDevice
+    : !!connectedDevice && bottleName.trim();
 
   // Step 1: Name and Goal
   if (step === 1) {
@@ -235,6 +259,9 @@ export default function OnboardingFlow() {
                 <Text style={styles.instruction}>
                   1. Please make sure your Bluetooth is on
                 </Text>
+                <Text style={styles.instruction}>
+                  2. Scan and select your water bottle below
+                </Text>
               </View>
 
               <TouchableOpacity
@@ -250,47 +277,52 @@ export default function OnboardingFlow() {
                 </Text>
               </TouchableOpacity>
 
-              {isScanning && (
-                <View style={styles.scanProgressContainer}>
-                  <View style={styles.scanProgressBar}>
-                    <Animated.View
-                      style={[
-                        styles.scanProgressFill,
-                        {
-                          width: scanProgress.interpolate({
-                            inputRange: [0, 100],
-                            outputRange: ["0%", "100%"],
-                          }),
-                        },
-                      ]}
-                    >
-                      <Animated.View
-                        style={[
-                          styles.wave,
-                          {
-                            transform: [{ translateY: waveHeight }],
-                          },
-                        ]}
-                      />
-                    </Animated.View>
-                  </View>
-                </View>
-              )}
+              {isScanning && <ActivityIndicator style={styles.scanLoader} color="#CAF0F8" size="small" />}
+
+              <View style={styles.deviceListSection}>
+                {allDevices.length === 0 ? (
+                  <Text style={styles.noDevicesText}>No devices found yet. Try scanning again.</Text>
+                ) : (
+                  <FlatList
+                    data={allDevices}
+                    keyExtractor={(item) => item.id}
+                    contentContainerStyle={styles.deviceListContainer}
+                    renderItem={({ item }) => {
+                      const deviceName = item.name || item.localName || "Unknown Device";
+                      const isConnected = connectedDevice?.id === item.id;
+
+                      return (
+                        <TouchableOpacity
+                          style={[styles.deviceItem, isConnected && styles.deviceItemConnected]}
+                          onPress={() => handleConnectDevice(item)}
+                        >
+                          <Text style={styles.deviceItemName}>{deviceName}</Text>
+                          <Text style={styles.deviceItemAction}>{isConnected ? "Connected" : "Connect"}</Text>
+                        </TouchableOpacity>
+                      );
+                    }}
+                  />
+                )}
+              </View>
 
               {scanComplete && (
                 <View style={styles.scanCompleteSection}>
-                  <Text style={styles.scanCompleteText}>✓ Scan Complete</Text>
+                  <Text style={styles.scanCompleteText}>✓ Device Connected</Text>
 
-                  <Text style={styles.label}>Name your water bottle</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="e.g., My Droplet"
-                    placeholderTextColor="#999"
-                    value={bottleName}
-                    onChangeText={setBottleName}
-                    returnKeyType="done"
-                    onSubmitEditing={Keyboard.dismiss}
-                  />
+                  {!isReconnectFlow && (
+                    <>
+                      <Text style={styles.label}>Name your water bottle</Text>
+                      <TextInput
+                        style={styles.input}
+                        placeholder="e.g., My Droplet"
+                        placeholderTextColor="#999"
+                        value={bottleName}
+                        onChangeText={setBottleName}
+                        returnKeyType="done"
+                        onSubmitEditing={Keyboard.dismiss}
+                      />
+                    </>
+                  )}
                 </View>
               )}
             </View>
@@ -302,6 +334,11 @@ export default function OnboardingFlow() {
             style={styles.backButton}
             onPress={() => {
               Keyboard.dismiss();
+              if (isReconnectFlow || isOnboardingComplete) {
+                router.back();
+                return;
+              }
+
               setStep(1);
             }}
           >
@@ -315,11 +352,20 @@ export default function OnboardingFlow() {
             ]}
             onPress={() => {
               Keyboard.dismiss();
-              if (canProceedStep2) setStep(3);
+              if (!canProceedStep2) return;
+
+              if (isReconnectFlow || isOnboardingComplete) {
+                router.back();
+                return;
+              }
+
+              setStep(3);
             }}
             disabled={!canProceedStep2}
           >
-            <Text style={styles.nextButtonText}>→</Text>
+            <Text style={styles.nextButtonText}>
+              {isReconnectFlow || isOnboardingComplete ? "✓" : "→"}
+            </Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -564,29 +610,46 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#023E8A",
   },
-  scanProgressContainer: {
-    marginTop: 20,
+  scanLoader: {
+    marginTop: 14,
   },
-  scanProgressBar: {
-    height: 40,
-    backgroundColor: "#90E0EF",
-    borderRadius: 20,
-    overflow: "hidden",
+  deviceListSection: {
+    marginTop: 16,
+    maxHeight: 220,
   },
-  scanProgressFill: {
-    height: "100%",
-    backgroundColor: "#48CAE4",
-    position: "relative",
-    overflow: "hidden",
+  noDevicesText: {
+    color: "#CAF0F8",
+    textAlign: "center",
+    fontSize: 14,
   },
-  wave: {
-    position: "absolute",
-    top: -5,
-    left: 0,
-    right: 0,
-    height: 50,
-    backgroundColor: "#00B4D8",
-    borderRadius: 100,
+  deviceListContainer: {
+    gap: 10,
+  },
+  deviceItem: {
+    backgroundColor: "#CAF0F8",
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: "#48CAE4",
+  },
+  deviceItemConnected: {
+    borderColor: "#00D084",
+  },
+  deviceItemName: {
+    color: "#023E8A",
+    fontWeight: "700",
+    fontSize: 15,
+    flex: 1,
+    marginRight: 10,
+  },
+  deviceItemAction: {
+    color: "#0077B6",
+    fontWeight: "700",
+    fontSize: 14,
   },
   scanCompleteSection: {
     marginTop: 30,

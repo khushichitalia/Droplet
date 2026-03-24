@@ -370,6 +370,18 @@ export default function SettingsPage() {
 
             <TouchableOpacity
               style={styles.settingButton}
+              onPress={() =>
+                router.push({
+                  pathname: "/onboarding",
+                  params: { reconnect: "1" },
+                })
+              }
+            >
+              <Text style={styles.buttonText}>Connect Bluetooth Device</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.settingButton}
               onPress={() => setShowBottleNameInput(!showBottleNameInput)}
             >
               <Text style={styles.buttonText}>Edit Bottle Name</Text>

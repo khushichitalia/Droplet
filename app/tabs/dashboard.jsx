@@ -1,34 +1,11 @@
 import React, { useState } from "react";
-import { StyleSheet, Text, View, TouchableOpacity, FlatList, Modal } from "react-native";
+import { StyleSheet, Text, View, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Circle } from "react-native-svg";
 import { BarChart } from "react-native-gifted-charts";
-import useBLE from "../../lib/useBLE";
 
 export default function Dashboard() {
   const [selected, setSelected] = useState("Week");
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  
-  const {
-    requestPermissions,
-    scanForPeripherals,
-    allDevices,
-    connectToDevice,
-    connectedDevice,
-  } = useBLE();
-
-  const scanForDevices = async () => {
-    const isPermissionsEnabled = await requestPermissions();
-    if (isPermissionsEnabled) {
-      scanForPeripherals();
-      setIsModalVisible(true);
-    }
-  };
-
-  const handleConnectDevice = (device) => {
-    connectToDevice(device);
-    setIsModalVisible(false);
-  };
 
   const [data, setData] = useState({
     today: { amount: 1.8, goal: 3 },
@@ -118,55 +95,8 @@ export default function Dashboard() {
   const selectedDayValue = monthDaysDaily[selectedDay];
   const hasData = typeof selectedDayValue === "number";
   
-  let connectButtonLabel = "Connect to Device";
-  if (connectedDevice) {
-    connectButtonLabel = "Connected";
-  }
-  
   return (
     <SafeAreaView style={styles.container}>
-      <TouchableOpacity 
-        style={styles.connectButton}
-        onPress={scanForDevices}
-      >
-        <Text style={styles.connectButtonText}>
-          {connectButtonLabel}
-        </Text>
-      </TouchableOpacity>
-
-      <Modal
-        visible={isModalVisible}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setIsModalVisible(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Select a Device</Text>
-            <FlatList
-              data={allDevices}
-              keyExtractor={(item) => item.id}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={styles.deviceItem}
-                  onPress={() => handleConnectDevice(item)}
-                >
-                  <Text style={styles.deviceName}>
-                    {item.name || item.localName || "Unknown Device"}
-                  </Text>
-                </TouchableOpacity>
-              )}
-            />
-            <TouchableOpacity
-              style={styles.cancelButton}
-              onPress={() => setIsModalVisible(false)}
-            >
-              <Text style={styles.cancelButtonText}>Cancel</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-
       <View style={styles.card}>
         <View style={styles.cardInner}>
           <View style={styles.topRow}>
