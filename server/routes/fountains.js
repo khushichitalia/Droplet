@@ -13,6 +13,26 @@ router.get("/", async (_req, res) => {
   }
 });
 
+// POST /api/fountains — create a new fountain
+router.post("/", async (req, res) => {
+  try {
+    const { name, latitude, longitude } = req.body;
+    if (!name || !latitude || !longitude) {
+      return res.status(400).json({ error: "name, latitude, and longitude are required" });
+    }
+    const fountain = await Fountain.create({
+      name,
+      latitude,
+      longitude,
+      avgRating: 0,
+      reviewCount: 0,
+    });
+    res.status(201).json(fountain);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET /api/fountains/:id — single fountain
 router.get("/:id", async (req, res) => {
   try {

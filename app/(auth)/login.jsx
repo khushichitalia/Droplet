@@ -18,7 +18,7 @@ export default function LoginScreen({ navigation }) {
   const handleLogin = async () => {
     try {
       await signInWithEmailAndPassword(auth, email.trim(), password);
-      router.replace("/tabs/homepage");
+      router.replace("/");
     } catch (error) {
       alert(error.message);
     }

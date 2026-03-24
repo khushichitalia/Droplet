@@ -62,6 +62,21 @@ export default function Dashboard() {
   const monthDays = data.monthDays || [];
   const yearData = data.yearData || [];
 
+  // Calculate which months to show in year view
+  const currentMonth = new Date().getMonth(); // 0-11
+  const currentDayOfMonth = new Date().getDate();
+  const daysInCurrentMonth = new Date(
+    new Date().getFullYear(),
+    currentMonth + 1,
+    0,
+  ).getDate();
+
+  // Only show months up to and including current month
+  const displayedYearData = yearData.slice(0, currentMonth + 1);
+
+  // Calculate current month progress (percentage based on days completed)
+  const currentMonthProgress = (currentDayOfMonth / daysInCurrentMonth) * 100;
+
   let activeData = weekDays;
   if (selected === "Month") activeData = monthDays;
   if (selected === "Year") activeData = yearData;
@@ -316,7 +331,7 @@ export default function Dashboard() {
                 {(() => {
                   const now = new Date();
                   const year = now.getFullYear();
-                  const month = now.getMonth(); // 0-based
+                  const month = now.getMonth();
                   const daysInMonth = new Date(year, month + 1, 0).getDate();
                   const todayIndex = isCurrentMonth ? today.getDate() - 1 : -1;
 
@@ -563,7 +578,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     fontSize: 18,
     textAlign: "center",
-    marginBottom: 6,
   },
   titleWrap: {
     height: 24,
@@ -798,8 +812,8 @@ const styles = StyleSheet.create({
     width: 34,
     height: 26,
     borderRadius: 6,
-    borderWidth: 3, // ALWAYS present
-    borderColor: "transparent", // invisible unless selected
+    borderWidth: 3,
+    borderColor: "transparent",
     alignItems: "center",
     justifyContent: "center",
   },
