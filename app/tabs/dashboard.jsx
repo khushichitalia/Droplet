@@ -6,6 +6,7 @@ import { BarChart } from "react-native-gifted-charts";
 
 export default function Dashboard() {
   const [selected, setSelected] = useState("Week");
+
   const [data, setData] = useState({
     today: { amount: 1.8, goal: 3 },
     week: { amount: 17.9, goal: 21 },
@@ -93,6 +94,7 @@ export default function Dashboard() {
   const isFutureDay = isCurrentMonth && selectedDay > today.getDate() - 1;
   const selectedDayValue = monthDaysDaily[selectedDay];
   const hasData = typeof selectedDayValue === "number";
+  
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.card}>
@@ -819,5 +821,60 @@ const styles = StyleSheet.create({
   text: {
     fontSize: 20,
     color: "white",
+  },
+  connectButton: {
+    backgroundColor: "#073B66",
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    marginBottom: 16,
+    alignItems: "center",
+  },
+  connectButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  modalContent: {
+    width: "80%",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    padding: 20,
+    maxHeight: "70%",
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#073B66",
+    marginBottom: 16,
+    textAlign: "center",
+  },
+  deviceItem: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E0E0E0",
+  },
+  deviceName: {
+    fontSize: 16,
+    color: "#073B66",
+  },
+  cancelButton: {
+    marginTop: 16,
+    paddingVertical: 12,
+    backgroundColor: "#E0E0E0",
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#073B66",
   },
 });
