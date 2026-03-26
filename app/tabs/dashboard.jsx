@@ -3,6 +3,9 @@ import { StyleSheet, Text, View, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Circle } from "react-native-svg";
 import { BarChart } from "react-native-gifted-charts";
+import { Animated } from "react-native";
+
+const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 export default function Dashboard() {
   const [selected, setSelected] = useState("Week");
@@ -27,9 +30,30 @@ export default function Dashboard() {
   const weekText = `${Math.round(weekProgress * 100)}%`;
   const todayLabel = `${data.today.amount}/${data.today.goal} L`;
   const weekLabel = `${data.week.amount}/${data.week.goal} L`;
-  const streakNumber = data.streak;
-  const weekDays = data.weekDays || [];
-  const perDayGoal = data.week && data.week.goal ? data.week.goal / 7 : 3;
+  // Compute streak dynamically from monthDaysDaily using perDayGoal
+  const today = new Date();
+  const todayIdx = today.getDate() - 1;
+  const monthDaysDaily = data.monthDaysDaily || [];
+  let streakNumber = 0;
+  for (let i = todayIdx; i >= 0; i--) {
+    if (
+      typeof monthDaysDaily[i] === "number" &&
+      monthDaysDaily[i] >= data.today.goal
+    ) {
+      streakNumber++;
+    } else {
+      break;
+    }
+  }
+
+// Get Monday-based week start
+const dayOfWeek = (today.getDay() + 6) % 7;
+const startOfWeek = Math.max(0, todayIdx - dayOfWeek);
+
+
+const weekDays = monthDaysDaily.slice(startOfWeek, todayIdx + 1);
+
+  const perDayGoal = data.today.goal; // Single source of truth for daily goal
   const weekMax = Math.max(perDayGoal, 3, ...weekDays);
   const weekAvg = weekDays.length
     ? weekDays.reduce((s, v) => s + v, 0) / weekDays.length
@@ -52,14 +76,16 @@ export default function Dashboard() {
 
   // Calculate current month progress (percentage based on days completed)
   const currentMonthProgress = (currentDayOfMonth / daysInCurrentMonth) * 100;
-
+  const [chartKey, setChartKey] = useState(0);
   let activeData = weekDays;
   if (selected === "Month") activeData = monthDays;
   if (selected === "Year") activeData = yearData;
 
   let activeLabels = [];
-  if (activeData.length === 7)
-    activeLabels = ["M", "T", "W", "R", "F", "S", "Su"];
+  if (selected === "Week") {
+  const allLabels = ["M", "T", "W", "R", "F", "S", "Su"];
+  activeLabels = allLabels.slice(0, weekDays.length);
+ }
   else if (activeData.length === 4) activeLabels = ["W1", "W2", "W3", "W4"];
   else if (activeData.length === 12)
     activeLabels = ["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"];
@@ -79,14 +105,13 @@ export default function Dashboard() {
       : barsAreaTop;
 
   const [selectedDay, setSelectedDay] = useState(0);
-  const monthDaysDaily = data.monthDaysDaily || [];
+
   const monthName = new Date().toLocaleString("default", { month: "long" });
   const monthYearLabel = `${monthName} ${new Date().getFullYear()}`;
   const monthAvg = monthDaysDaily.length
     ? monthDaysDaily.reduce((s, v) => s + v, 0) / monthDaysDaily.length
     : 0;
 
-  const today = new Date();
   const isCurrentMonth =
     today.getMonth() === new Date().getMonth() &&
     today.getFullYear() === new Date().getFullYear();
@@ -154,7 +179,10 @@ export default function Dashboard() {
                   styles.segmentButton,
                   selected === "Week" && styles.segmentSelected,
                 ]}
-                onPress={() => setSelected("Week")}
+                onPress={() => {
+                  setSelected("Week");
+                  setChartKey(prev => prev + 1);
+                }}
               >
                 <Text
                   style={
@@ -172,7 +200,10 @@ export default function Dashboard() {
                   styles.segmentButton,
                   selected === "Month" && styles.segmentSelected,
                 ]}
-                onPress={() => setSelected("Month")}
+                onPress={() => {
+                setSelected("Month");
+                setChartKey(prev => prev + 1);
+              }}
               >
                 <Text
                   style={
@@ -190,7 +221,10 @@ export default function Dashboard() {
                   styles.segmentButton,
                   selected === "Year" && styles.segmentSelected,
                 ]}
-                onPress={() => setSelected("Year")}
+                onPress={() => {
+                setSelected("Year");
+                setChartKey(prev => prev + 1);
+              }}
               >
                 <Text
                   style={
@@ -212,41 +246,51 @@ export default function Dashboard() {
               </Text>
               <View style={{ alignItems: "center", overflow: "hidden" }}>
                 <BarChart
-                  data={weekDays.map((val, i) => ({
-                    value: val,
-                    label: activeLabels[i],
-                    frontColor: val >= perDayGoal ? "#073B66" : "#8EBDE0",
-                  }))}
-                  barWidth={16}
-                  spacing={16}
-                  noOfSections={4}
-                  maxValue={4}
-                  yAxisThickness={0}
-                  xAxisThickness={1}
-                  xAxisColor="#B9EEF6"
-                  yAxisTextStyle={{
-                    color: "#0A4A7A",
-                    fontWeight: "800",
-                    fontSize: 12,
-                  }}
-                  xAxisLabelTextStyle={{
-                    color: "#073B66",
-                    fontWeight: "900",
-                    fontSize: 11,
-                  }}
-                  barBorderRadius={8}
-                  height={150}
-                  width={280}
-                  showGradient={false}
-                  backgroundColor="transparent"
-                  rulesType="solid"
-                  rulesColor="#CDF6FB"
-                  rulesThickness={1}
-                  hideRules={false}
-                  yAxisLabelSuffix=" L"
-                  initialSpacing={10}
-                  endSpacing={10}
-                />
+                key={chartKey}
+                data={weekDays.map((val, i) => ({
+                  value: val,
+                  label: activeLabels[i],
+                  frontColor: val >= perDayGoal ? "#073B66" : "#8EBDE0",
+                }))}
+
+                barWidth={16}
+                spacing={16}
+
+                // ✅ ADD THESE
+                isAnimated
+                animationDuration={800}
+                animationEasing="easeOutCubic"
+
+                noOfSections={4}
+                maxValue={Math.max(perDayGoal, ...weekDays, 3)}
+                yAxisThickness={0}
+                xAxisThickness={1}
+                xAxisColor="#B9EEF6"
+
+                yAxisTextStyle={{
+                  color: "#0A4A7A",
+                  fontWeight: "800",
+                  fontSize: 12,
+                }}
+                xAxisLabelTextStyle={{
+                  color: "#073B66",
+                  fontWeight: "900",
+                  fontSize: 11,
+                }}
+
+                barBorderRadius={8}
+                height={150}
+                width={280}
+
+                rulesType="solid"
+                rulesColor="#CDF6FB"
+                rulesThickness={1}
+                hideRules={false}
+
+                yAxisLabelSuffix=" L"
+                initialSpacing={10}
+                endSpacing={10}
+              />
               </View>
             </View>
           )}
@@ -324,7 +368,7 @@ export default function Dashboard() {
                   <View style={styles.selectedDayPill}>
                     <Text
                       style={styles.selectedDayText}
-                    >{`Feb ${selectedDay + 1}`}</Text>
+                    >{`${monthName} ${selectedDay + 1}`}</Text>
                   </View>
 
                   <View style={styles.dayDetails}>
@@ -354,7 +398,7 @@ export default function Dashboard() {
             <View style={styles.yearArea}>
               <Text style={styles.monthTitle}>Year</Text>
               <View style={styles.yearGrid}>
-                {yearData.map((val, i) => {
+                {displayedYearData.map((val, i) => {
                   const months = [
                     "Jan",
                     "Feb",
@@ -369,7 +413,11 @@ export default function Dashboard() {
                     "Nov",
                     "Dec",
                   ];
-                  const pct = Math.max(0, Math.min(1, val / 100));
+                  const isCurrentMonthItem = i === currentMonth;
+                  // For current month, scale progress by how far through the month we are
+                  const pct = isCurrentMonthItem
+                    ? Math.max(0, Math.min(1, (val / 100) * (currentDayOfMonth / daysInCurrentMonth)))
+                    : Math.max(0, Math.min(1, val / 100));
                   return (
                     <View key={i} style={styles.yearItem}>
                       <CircularProgress
@@ -405,10 +453,23 @@ function CircularProgress({
   innerColor = "#E6FBFF",
   text = "",
 }) {
+  const animated = React.useRef(new Animated.Value(0)).current;
+
+  React.useEffect(() => {
+    Animated.timing(animated, {
+      toValue: Math.max(0, Math.min(progress, 1)),
+      duration: 800,
+      useNativeDriver: false,
+    }).start();
+  }, [progress]);
+
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset =
-    circumference * (1 - Math.max(0, Math.min(progress, 1)));
+
+  const strokeDashoffset = animated.interpolate({
+    inputRange: [0, 1],
+    outputRange: [circumference, 0],
+  });
 
   return (
     <View
@@ -428,14 +489,14 @@ function CircularProgress({
           strokeWidth={strokeWidth}
           strokeLinecap="round"
         />
-        <Circle
+        <AnimatedCircle
           stroke={color}
           cx={size / 2}
           cy={size / 2}
           r={radius}
           strokeWidth={strokeWidth}
           strokeLinecap="round"
-          strokeDasharray={`${circumference} ${circumference}`}
+          strokeDasharray={`${circumference}`}
           strokeDashoffset={strokeDashoffset}
           rotation="-90"
           origin={`${size / 2}, ${size / 2}`}
@@ -460,7 +521,6 @@ function CircularProgress({
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -740,8 +800,8 @@ const styles = StyleSheet.create({
     width: 34,
     height: 26,
     borderRadius: 6,
-    borderWidth: 3, 
-    borderColor: "transparent", 
+    borderWidth: 3,
+    borderColor: "transparent",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -804,17 +864,19 @@ const styles = StyleSheet.create({
   yearArea: {
     paddingTop: 8,
     alignItems: "center",
+    width: "100%",
   },
   yearGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    justifyContent: "space-between",
-    paddingHorizontal: 8,
+    justifyContent: "center",
+    paddingHorizontal: 4,
+    gap: 16,
   },
   yearItem: {
-    width: "24%",
+    width: 64,
     alignItems: "center",
-    marginBottom: 18,
+    marginBottom: 4,
   },
   text: {
     fontSize: 20,

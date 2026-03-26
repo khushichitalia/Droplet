@@ -9,8 +9,6 @@ import {
   Animated,
   Modal,
   Platform,
-  Keyboard,
-  TouchableWithoutFeedback,
   KeyboardAvoidingView,
   ScrollView,
 } from "react-native";
@@ -57,7 +55,7 @@ export default function OnboardingFlow() {
             duration: 1000,
             useNativeDriver: false,
           }),
-        ]),
+        ])
       ).start();
     } else {
       waveAnimation.setValue(0);
@@ -87,16 +85,17 @@ export default function OnboardingFlow() {
     } else {
       // Already tared once - can re-tare without warning
       console.log("Re-taring water bottle...");
-      // Show success
+      // Show success (using alert for now since it's not critical)
       alert("Success! Water bottle re-calibrated!");
     }
   };
 
   const confirmTare = () => {
+    // TODO: Send tare command to hardware
     console.log("Taring water bottle...");
     setHasTared(true);
     setShowTareWarning(false);
-
+    
     // Show success feedback
     setTimeout(() => {
       alert("Success! Water bottle calibrated!");
@@ -135,81 +134,65 @@ export default function OnboardingFlow() {
   if (step === 1) {
     return (
       <SafeAreaView style={styles.container}>
-        <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
-          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-            <View style={styles.content}>
-              <Text style={styles.welcomeText}>Ok, let's get you started!</Text>
-              <Text style={styles.subtitle}>
-                First, tell us a bit about yourself
-              </Text>
+        <View style={styles.content}>
+          <Text style={styles.welcomeText}>Ok, let's get you started!</Text>
+          <Text style={styles.subtitle}>First, tell us a bit about yourself</Text>
 
-              <View style={styles.inputSection}>
-                <Text style={styles.label}>What's your name?</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Enter your name"
-                  placeholderTextColor="#999"
-                  value={name}
-                  onChangeText={setName}
-                  returnKeyType="done"
-                  onSubmitEditing={Keyboard.dismiss}
-                />
+          <View style={styles.inputSection}>
+            <Text style={styles.label}>What's your name?</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter your name"
+              placeholderTextColor="#999"
+              value={name}
+              onChangeText={setName}
+            />
 
-                <Text style={styles.label}>What's your daily water goal?</Text>
-                <View style={styles.goalRow}>
-                  <TextInput
-                    style={[styles.input, styles.goalInput]}
-                    placeholder="Enter amount"
-                    placeholderTextColor="#999"
-                    value={goal}
-                    onChangeText={setGoal}
-                    keyboardType="numeric"
-                    returnKeyType="done"
-                    onSubmitEditing={Keyboard.dismiss}
-                  />
-                  <TouchableOpacity
-                    style={styles.unitButton}
-                    onPress={() => setShowUnitPicker(!showUnitPicker)}
-                  >
-                    <Text style={styles.unitButtonText}>{goalUnit}</Text>
-                    <Text style={styles.unitArrow}>▼</Text>
-                  </TouchableOpacity>
-                </View>
-
-                {showUnitPicker && (
-                  <View style={styles.unitDropdown}>
-                    {units.map((unit) => (
-                      <TouchableOpacity
-                        key={unit}
-                        style={[
-                          styles.unitOption,
-                          goalUnit === unit && styles.unitOptionSelected,
-                        ]}
-                        onPress={() => {
-                          setGoalUnit(unit);
-                          setShowUnitPicker(false);
-                        }}
-                      >
-                        <Text style={styles.unitOptionText}>{unit}</Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                )}
-              </View>
+            <Text style={styles.label}>What's your daily water goal?</Text>
+            <View style={styles.goalRow}>
+              <TextInput
+                style={[styles.input, styles.goalInput]}
+                placeholder="Enter amount"
+                placeholderTextColor="#999"
+                value={goal}
+                onChangeText={setGoal}
+                keyboardType="numeric"
+              />
+              <TouchableOpacity
+                style={styles.unitButton}
+                onPress={() => setShowUnitPicker(!showUnitPicker)}
+              >
+                <Text style={styles.unitButtonText}>{goalUnit}</Text>
+                <Text style={styles.unitArrow}>▼</Text>
+              </TouchableOpacity>
             </View>
-          </TouchableWithoutFeedback>
-        </KeyboardAvoidingView>
+
+            {showUnitPicker && (
+              <View style={styles.unitDropdown}>
+                {units.map((unit) => (
+                  <TouchableOpacity
+                    key={unit}
+                    style={[
+                      styles.unitOption,
+                      goalUnit === unit && styles.unitOptionSelected,
+                    ]}
+                    onPress={() => {
+                      setGoalUnit(unit);
+                      setShowUnitPicker(false);
+                    }}
+                  >
+                    <Text style={styles.unitOptionText}>{unit}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+          </View>
+        </View>
 
         <View style={styles.singleNavigationRow}>
           <TouchableOpacity
-            style={[
-              styles.nextButton,
-              !canProceedStep1 && styles.nextButtonDisabled,
-            ]}
-            onPress={() => {
-              Keyboard.dismiss();
-              if (canProceedStep1) setStep(2);
-            }}
+            style={[styles.nextButton, !canProceedStep1 && styles.nextButtonDisabled]}
+            onPress={() => canProceedStep1 && setStep(2)}
             disabled={!canProceedStep1}
           >
             <Text style={styles.nextButtonText}>→</Text>
@@ -223,13 +206,17 @@ export default function OnboardingFlow() {
   if (step === 2) {
     return (
       <SafeAreaView style={styles.container}>
-        <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
-          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <KeyboardAvoidingView 
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={{ flex: 1 }}
+        >
+          <ScrollView 
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+          >
             <View style={styles.content}>
               <Text style={styles.welcomeText}>Connect Your Water Bottle</Text>
-              <Text style={styles.subtitle}>
-                Let's find your smart water bottle
-              </Text>
+              <Text style={styles.subtitle}>Let's find your smart water bottle</Text>
 
               <View style={styles.instructionSection}>
                 <Text style={styles.instruction}>
@@ -238,10 +225,7 @@ export default function OnboardingFlow() {
               </View>
 
               <TouchableOpacity
-                style={[
-                  styles.scanButton,
-                  isScanning && styles.scanButtonDisabled,
-                ]}
+                style={[styles.scanButton, isScanning && styles.scanButtonDisabled]}
                 onPress={handleScan}
                 disabled={isScanning}
               >
@@ -288,40 +272,26 @@ export default function OnboardingFlow() {
                     placeholderTextColor="#999"
                     value={bottleName}
                     onChangeText={setBottleName}
-                    returnKeyType="done"
-                    onSubmitEditing={Keyboard.dismiss}
                   />
                 </View>
               )}
             </View>
-          </TouchableWithoutFeedback>
+          </ScrollView>
+
+          <View style={styles.navigationRow}>
+            <TouchableOpacity style={styles.backButton} onPress={() => setStep(1)}>
+              <Text style={styles.backButtonText}>←</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.nextButton, !canProceedStep2 && styles.nextButtonDisabled]}
+              onPress={() => canProceedStep2 && setStep(3)}
+              disabled={!canProceedStep2}
+            >
+              <Text style={styles.nextButtonText}>→</Text>
+            </TouchableOpacity>
+          </View>
         </KeyboardAvoidingView>
-
-        <View style={styles.navigationRow}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => {
-              Keyboard.dismiss();
-              setStep(1);
-            }}
-          >
-            <Text style={styles.backButtonText}>←</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[
-              styles.nextButton,
-              !canProceedStep2 && styles.nextButtonDisabled,
-            ]}
-            onPress={() => {
-              Keyboard.dismiss();
-              if (canProceedStep2) setStep(3);
-            }}
-            disabled={!canProceedStep2}
-          >
-            <Text style={styles.nextButtonText}>→</Text>
-          </TouchableOpacity>
-        </View>
       </SafeAreaView>
     );
   }
@@ -335,12 +305,8 @@ export default function OnboardingFlow() {
           <Text style={styles.subtitle}>Let's calibrate your water bottle</Text>
 
           <View style={styles.instructionSection}>
-            <Text style={styles.instruction}>
-              1. Empty your water bottle completely
-            </Text>
-            <Text style={styles.instruction}>
-              2. Attach the device to your water bottle
-            </Text>
+            <Text style={styles.instruction}>1. Empty your water bottle completely</Text>
+            <Text style={styles.instruction}>2. Attach the device to your water bottle</Text>
             <Text style={styles.instruction}>
               3. Press "Tare" to calibrate the weight
             </Text>
@@ -363,18 +329,12 @@ export default function OnboardingFlow() {
         </View>
 
         <View style={styles.navigationRow}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => setStep(2)}
-          >
+          <TouchableOpacity style={styles.backButton} onPress={() => setStep(2)}>
             <Text style={styles.backButtonText}>←</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[
-              styles.finishButton,
-              !hasTared && styles.finishButtonDisabled,
-            ]}
+            style={[styles.finishButton, !hasTared && styles.finishButtonDisabled]}
             onPress={handleFinishSetup}
             disabled={!hasTared}
           >
@@ -393,24 +353,20 @@ export default function OnboardingFlow() {
               <Text style={styles.warningModalSubtext}>
                 The bottle must be completely empty for accurate calibration.
               </Text>
-
+              
               <View style={styles.warningButtonRow}>
                 <TouchableOpacity
                   style={styles.warningButtonCancel}
                   onPress={() => setShowTareWarning(false)}
                 >
-                  <Text style={styles.warningButtonCancelText}>
-                    No, go back
-                  </Text>
+                  <Text style={styles.warningButtonCancelText}>No, go back</Text>
                 </TouchableOpacity>
-
+                
                 <TouchableOpacity
                   style={styles.warningButtonConfirm}
                   onPress={confirmTare}
                 >
-                  <Text style={styles.warningButtonConfirmText}>
-                    Yes, it's empty
-                  </Text>
+                  <Text style={styles.warningButtonConfirmText}>Yes, it's empty</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -423,8 +379,7 @@ export default function OnboardingFlow() {
             <View style={styles.welcomeModal}>
               <Text style={styles.welcomeModalTitle}>Welcome, {name}! 🎉</Text>
               <Text style={styles.welcomeModalText}>
-                You're all set! Your water bottle is ready to track your
-                hydration.
+                You're all set! Your water bottle is ready to track your hydration.
               </Text>
               <Text style={styles.welcomeModalSubtext}>
                 You can edit any settings anytime from the settings page.
@@ -450,6 +405,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#023E8A",
+  },
+  scrollContent: {
+    flexGrow: 1,
   },
   content: {
     flex: 1,
@@ -628,13 +586,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     paddingHorizontal: 24,
-    paddingBottom: 50,
+    paddingBottom: 20,
   },
   singleNavigationRow: {
     flexDirection: "row",
     justifyContent: "flex-end",
     paddingHorizontal: 24,
-    paddingBottom: 50,
+    paddingBottom: 20,
   },
   nextButton: {
     backgroundColor: "#48CAE4",
