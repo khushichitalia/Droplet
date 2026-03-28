@@ -12,6 +12,7 @@ import {
   ScrollView,
   FlatList,
   ActivityIndicator,
+  Keyboard,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -234,97 +235,83 @@ export default function OnboardingFlow() {
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={{ flex: 1 }}
         >
-          <ScrollView 
+          <FlatList
+            data={allDevices.length > 0 ? allDevices : []}
+            keyExtractor={(item) => item.id}
             contentContainerStyle={styles.scrollContent}
             keyboardShouldPersistTaps="handled"
-          >
-            <View style={styles.content}>
-              <Text style={styles.welcomeText}>Connect Your Water Bottle</Text>
-              <Text style={styles.subtitle}>Let's find your smart water bottle</Text>
+            ListHeaderComponent={
+              <View style={styles.content}>
+                <Text style={styles.welcomeText}>Connect Your Water Bottle</Text>
+                <Text style={styles.subtitle}>Let's find your smart water bottle</Text>
 
-              <View style={styles.instructionSection}>
-                <Text style={styles.instruction}>
-                  1. Please make sure your Bluetooth is on
-                </Text>
-                <Text style={styles.instruction}>
-                  2. Scan and select your water bottle below
-                </Text>
-              </View>
+                <View style={styles.instructionSection}>
+                  <Text style={styles.instruction}>
+                    1. Please make sure your Bluetooth is on
+                  </Text>
+                  <Text style={styles.instruction}>
+                    2. Scan and select your water bottle below
+                  </Text>
+                </View>
 
-              <TouchableOpacity
-                style={[styles.scanButton, isScanning && styles.scanButtonDisabled]}
-                onPress={handleScan}
-                disabled={isScanning}
-              >
-                <Text style={styles.scanButtonText}>
-                  {isScanning ? "Scanning..." : "Scan for Water Bottle"}
-                </Text>
-              </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.scanButton, isScanning && styles.scanButtonDisabled]}
+                  onPress={handleScan}
+                  disabled={isScanning}
+                >
+                  <Text style={styles.scanButtonText}>
+                    {isScanning ? "Scanning..." : "Scan for Water Bottle"}
+                  </Text>
+                </TouchableOpacity>
 
-              {isScanning && <ActivityIndicator style={styles.scanLoader} color="#CAF0F8" size="small" />}
+                {isScanning && <ActivityIndicator style={styles.scanLoader} color="#CAF0F8" size="small" />}
 
-              <View style={styles.deviceListSection}>
-                {allDevices.length === 0 ? (
+                {allDevices.length === 0 && (
                   <Text style={styles.noDevicesText}>No devices found yet. Try scanning again.</Text>
-                ) : (
-                  <FlatList
-                    data={allDevices}
-                    keyExtractor={(item) => item.id}
-                    contentContainerStyle={styles.deviceListContainer}
-                    renderItem={({ item }) => {
-                      const deviceName = item.name || item.localName || "Unknown Device";
-                      const isConnected = connectedDevice?.id === item.id;
-
-                      return (
-                        <TouchableOpacity
-                          style={[styles.deviceItem, isConnected && styles.deviceItemConnected]}
-                          onPress={() => handleConnectDevice(item)}
-                        >
-                          <Text style={styles.deviceItemName}>{deviceName}</Text>
-                          <Text style={styles.deviceItemAction}>{isConnected ? "Connected" : "Connect"}</Text>
-                        </TouchableOpacity>
-                      );
-                    }}
-                  />
                 )}
               </View>
+            }
+            renderItem={({ item }) => {
+              const deviceName = item.name || item.localName || "Unknown Device";
+              const isConnected = connectedDevice?.id === item.id;
 
-              {scanComplete && (
-                <View style={styles.scanCompleteSection}>
-                  <Text style={styles.scanCompleteText}>✓ Device Connected</Text>
-
-                  {!isReconnectFlow && (
-                    <>
-                      <Text style={styles.label}>Name your water bottle</Text>
-                      <TextInput
-                        style={styles.input}
-                        placeholder="e.g., My Droplet"
-                        placeholderTextColor="#999"
-                        value={bottleName}
-                        onChangeText={setBottleName}
-                        returnKeyType="done"
-                        onSubmitEditing={Keyboard.dismiss}
-                      />
-                    </>
-                  )}
+              return (
+                <View style={styles.deviceListSection}>
+                  <TouchableOpacity
+                    style={[styles.deviceItem, isConnected && styles.deviceItemConnected]}
+                    onPress={() => handleConnectDevice(item)}
+                  >
+                    <Text style={styles.deviceItemName}>{deviceName}</Text>
+                    <Text style={styles.deviceItemAction}>{isConnected ? "Connected" : "Connect"}</Text>
+                  </TouchableOpacity>
                 </View>
-              )}
-            </View>
-          </ScrollView>
+              );
+            }}
+            ListFooterComponent={
+              <>
+                {scanComplete && (
+                  <View style={styles.scanCompleteSection}>
+                    <Text style={styles.scanCompleteText}>✓ Device Connected</Text>
 
-          <View style={styles.navigationRow}>
-            <TouchableOpacity style={styles.backButton} onPress={() => setStep(1)}>
-              <Text style={styles.backButtonText}>←</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.nextButton, !canProceedStep2 && styles.nextButtonDisabled]}
-              onPress={() => canProceedStep2 && setStep(3)}
-              disabled={!canProceedStep2}
-            >
-              <Text style={styles.nextButtonText}>→</Text>
-            </TouchableOpacity>
-          </View>
+                    {!isReconnectFlow && (
+                      <View style={styles.content}>
+                        <Text style={styles.label}>Name your water bottle</Text>
+                        <TextInput
+                          style={styles.input}
+                          placeholder="e.g., My Droplet"
+                          placeholderTextColor="#999"
+                          value={bottleName}
+                          onChangeText={setBottleName}
+                          returnKeyType="done"
+                          onSubmitEditing={Keyboard.dismiss}
+                        />
+                      </View>
+                    )}
+                  </View>
+                )}
+              </>
+            }
+          />
         </KeyboardAvoidingView>
         <View style={styles.navigationRow}>
           <TouchableOpacity
