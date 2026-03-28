@@ -364,7 +364,7 @@ export default function OnboardingFlow() {
               {isReconnectFlow || isOnboardingComplete ? "✓" : "→"}
             </Text>
           </TouchableOpacity>
-        </View
+        </View>
       </SafeAreaView>
     );
   }
