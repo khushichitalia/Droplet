@@ -14,6 +14,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import { signOut } from "firebase/auth";
 import { auth } from "../lib/firebase";
+import * as Battery from "expo-battery";
 
 let Battery = null;
 try {
@@ -262,7 +263,7 @@ export default function SettingsPage() {
                 <Text style={[styles.batteryLevel, { color: getBatteryColor() }]}>
                   {!batteryModuleAvailable
                     ? "Unavailable"
-                    : batteryLevel !== null 
+                    : batteryLevel !== null
                     ? `${Math.round(batteryLevel * 100)}%` 
                     : "Checking..."}
                 </Text>
