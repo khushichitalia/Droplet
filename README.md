@@ -1,6 +1,6 @@
 ## Droplet 
 
-(｡･ω･｡)ﾉ A mobile app that pairs with a load cell to track hydration. Place any water bottle on the load cell and it measures weight changes to log water intake in real time. If hydration goals aren't met, the app can restrict usage of selected apps on your phone
+(｡･ω･｡)ﾉ A mobile app that pairs with a hardware attachment to track hydration. Attach any water bottle on the attachment and it measures weight changes to log water intake in real time. If hydration goals aren't met, the app can restrict usage of selected apps on your phone
 
 ### Tech Stack
 
