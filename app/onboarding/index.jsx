@@ -8,6 +8,7 @@ import {
   Alert,
   Modal,
   Platform,
+  Keyboard,
   KeyboardAvoidingView,
   ScrollView,
   FlatList,
@@ -314,19 +315,6 @@ export default function OnboardingFlow() {
             </View>
           </ScrollView>
 
-          <View style={styles.navigationRow}>
-            <TouchableOpacity style={styles.backButton} onPress={() => setStep(1)}>
-              <Text style={styles.backButtonText}>←</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.nextButton, !canProceedStep2 && styles.nextButtonDisabled]}
-              onPress={() => canProceedStep2 && setStep(3)}
-              disabled={!canProceedStep2}
-            >
-              <Text style={styles.nextButtonText}>→</Text>
-            </TouchableOpacity>
-          </View>
         </KeyboardAvoidingView>
         <View style={styles.navigationRow}>
           <TouchableOpacity

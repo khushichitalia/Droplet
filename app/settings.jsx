@@ -14,6 +14,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import { signOut } from "firebase/auth";
 import { auth } from "../lib/firebase";
+import useBLE from "../lib/useBLE";
 //import * as Battery from "expo-battery";
 
 // let Battery = null;
@@ -217,24 +218,24 @@ export default function SettingsPage() {
     );
   };
 
-  // const handlePowerOff = () => {
-  //   Alert.alert(
-  //     "Power Off",
-  //     "Are you sure you want to power off the device? You'll need to physically turn it back on.",
-  //     [
-  //       { text: "Cancel", style: "cancel" },
-  //       {
-  //         text: "Power Off",
-  //         style: "destructive",
-  //         onPress: () => {
-  //           // TODO: Send power off command to hardware
-  //           console.log("Powering off bottle...");
-  //           Alert.alert("Device Powered Off", "Turn on the physical device to reconnect.");
-  //         },
-  //       },
-  //     ]
-  //   );
-  // };
+  const handlePowerOff = () => {
+    Alert.alert(
+      "Power Off",
+      "Are you sure you want to power off the device? You'll need to physically turn it back on.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Power Off",
+          style: "destructive",
+          onPress: () => {
+            // TODO: Send power off command to hardware
+            console.log("Powering off bottle...");
+            Alert.alert("Device Powered Off", "Turn on the physical device to reconnect.");
+          },
+        },
+      ]
+    );
+  };
 
   const getBatteryIcon = () => {
     if (battery === null) return "🔋";
