@@ -320,8 +320,13 @@ export default function ScreenTime() {
       </View>
 
       {/* App Selector Modal */}
-      <Modal visible={showAppSelector} animationType="slide">
-        <SafeAreaView style={styles.modalContainer}>
+      <Modal
+        visible={showAppSelector}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowAppSelector(false)}
+      >
+        <SafeAreaView style={styles.modalContainer} edges={["top", "bottom"]}>
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Select Apps</Text>
             <TouchableOpacity onPress={() => setShowAppSelector(false)}>
