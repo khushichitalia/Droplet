@@ -14,7 +14,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import { signOut } from "firebase/auth";
 import { auth } from "../lib/firebase";
-import useBLE from "../lib/useBLE";
+import { useBLEContext } from "../lib/BLEContext";
 //import * as Battery from "expo-battery";
 
 // let Battery = null;
@@ -41,7 +41,7 @@ export default function SettingsPage() {
     tare,
     scanForPeripherals,
     connectToDevice 
-  } = useBLE();
+  } = useBLEContext();
 
   const [name, setName] = useState("");
   const [showNameInput, setShowNameInput] = useState(false);

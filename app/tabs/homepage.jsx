@@ -14,7 +14,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Path, Rect, Defs, ClipPath, G } from "react-native-svg";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
-import useBLE from "../../lib/useBLE";
+import { useBLEContext } from "../../lib/BLEContext";
 
 const AnimatedRect = Animated.createAnimatedComponent(Rect);
 const NAME_STORAGE_KEY = "@droplet/display-name";
@@ -29,7 +29,7 @@ export default function HomePage() {
     battery,
     scanForPeripherals,
     connectToDevice 
-  } = useBLE();
+  } = useBLEContext();
 
   const currentAmount = currWt;
   const goalAmount = 80;
