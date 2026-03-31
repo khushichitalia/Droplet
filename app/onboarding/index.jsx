@@ -45,6 +45,7 @@ export default function OnboardingFlow() {
     requestPermissions,
     scanForPeripherals,
     allDevices,
+    tare,
     connectToDevice,
     connectedDevice,
   } = useBLE();
@@ -117,16 +118,17 @@ export default function OnboardingFlow() {
     }
   };
 
-  const confirmTare = () => {
+  const confirmTare = async () => {
     // TODO: Send tare command to hardware
-    console.log("Taring water bottle...");
-    setHasTared(true);
     setShowTareWarning(false);
-    
-    // Show success feedback
-    setTimeout(() => {
-      alert("Success! Water bottle calibrated!");
-    }, 100);
+    try {
+        console.log("Taring water bottle...");
+        await tare(connectedDevice);
+        setHasTared(true);
+        alert("Success! Water bottle calibrated!");
+    } catch (error) {
+        alert("Tare Failed", "Could not calibrate the bottle. Please try again.");
+    }
   };
 
   const handleFinishSetup = async () => {
