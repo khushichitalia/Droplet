@@ -14,14 +14,14 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import { signOut } from "firebase/auth";
 import { auth } from "../lib/firebase";
-import * as Battery from "expo-battery";
+//import * as Battery from "expo-battery";
 
-let Battery = null;
-try {
-  Battery = require("expo-battery");
-} catch {
-  Battery = null;
-}
+// let Battery = null;
+// try {
+//   Battery = require("expo-battery");
+// } catch {
+//   Battery = null;
+// }
 
 const NAME_STORAGE_KEY = "@droplet/display-name";
 const GOAL_STORAGE_KEY = "@droplet/daily-goal";
@@ -29,6 +29,18 @@ const GOAL_UNIT_STORAGE_KEY = "@droplet/daily-goal-unit";
 const BOTTLE_NAME_STORAGE_KEY = "@droplet/bottle-name";
 
 export default function SettingsPage() {
+  const { 
+    water, 
+    connectedDevice, 
+    allDevices, 
+    color, 
+    currWt,
+    battery,
+    tare,
+    scanForPeripherals,
+    connectToDevice 
+  } = useBLE();
+
   const [name, setName] = useState("");
   const [showNameInput, setShowNameInput] = useState(false);
   const [goal, setGoal] = useState("80");
@@ -40,53 +52,53 @@ export default function SettingsPage() {
   
   // Battery states
   const [batteryLevel, setBatteryLevel] = useState(null);
-  const [batteryState, setBatteryState] = useState(null);
-  const [isCharging, setIsCharging] = useState(false);
-  const batteryModuleAvailable = !!Battery;
+  // const [batteryState, setBatteryState] = useState(null);
+  // const [isCharging, setIsCharging] = useState(false);
+  // const batteryModuleAvailable = !!Battery;
 
   const units = ["oz", "ml", "L", "gal", "cups"];
 
   useEffect(() => {
     loadUserData();
     
-    // Battery API only works on mobile devices, not web
-    if (Platform.OS !== 'web' && batteryModuleAvailable) {
-      loadBatteryInfo();
+    // // Battery API only works on mobile devices, not web
+    // if (Platform.OS !== 'web' && batteryModuleAvailable) {
+    //   loadBatteryInfo();
       
-      const subscription = Battery.addBatteryLevelListener(({ batteryLevel }) => {
-        setBatteryLevel(batteryLevel);
-      });
+    //   const subscription = Battery.addBatteryLevelListener(({ batteryLevel }) => {
+    //     setBatteryLevel(batteryLevel);
+    //   });
 
-      const stateSubscription = Battery.addBatteryStateListener(({ batteryState }) => {
-        setBatteryState(batteryState);
-        setIsCharging(batteryState === Battery.BatteryState.CHARGING || batteryState === Battery.BatteryState.FULL);
-      });
+    //   const stateSubscription = Battery.addBatteryStateListener(({ batteryState }) => {
+    //     setBatteryState(batteryState);
+    //     setIsCharging(batteryState === Battery.BatteryState.CHARGING || batteryState === Battery.BatteryState.FULL);
+    //   });
 
-      return () => {
-        subscription.remove();
-        stateSubscription.remove();
-      };
-    } else {
-      // Fallback when running on web or when native battery module is unavailable.
-      setBatteryLevel(0.85);
-      setIsCharging(false);
-    }
-  }, [batteryModuleAvailable]);
+    //   return () => {
+    //     subscription.remove();
+    //     stateSubscription.remove();
+    //   };
+    // } else {
+    //   // Fallback when running on web or when native battery module is unavailable.
+    //   setBatteryLevel(0.85);
+    //   setIsCharging(false);
+    // }
+  }, []);
 
-  const loadBatteryInfo = async () => {
-    if (!Battery) return;
+  // const loadBatteryInfo = async () => {
+  //   if (!Battery) return;
 
-    try {
-      const level = await Battery.getBatteryLevelAsync();
-      const state = await Battery.getBatteryStateAsync();
+    // try {
+    //   // const level = await Battery.getBatteryLevelAsync();
+    //   // const state = await Battery.getBatteryStateAsync();
       
-      setBatteryLevel(level);
-      setBatteryState(state);
-      setIsCharging(state === Battery.BatteryState.CHARGING || state === Battery.BatteryState.FULL);
-    } catch (error) {
-      console.log("Failed to load battery info", error);
-    }
-  };
+    //   // setBatteryLevel(level);
+    //   // setBatteryState(state);
+    //   // setIsCharging(state === Battery.BatteryState.CHARGING || state === Battery.BatteryState.FULL);
+    // } catch (error) {
+    //   console.log("Failed to load battery info", error);
+    // }
+  // };
 
   const loadUserData = async () => {
     try {
@@ -172,10 +184,15 @@ export default function SettingsPage() {
         { text: "Cancel", style: "cancel" },
         {
           text: "Confirm",
-          onPress: () => {
-            // TODO: Send tare command to hardware
+          onPress: async () => {
             console.log("Taring bottle...");
-            Alert.alert("Success", "Bottle recalibrated!");
+            // TODO: Send tare command to hardware
+            try {
+              await tare(connectedDevice);
+              Alert.alert("Success", "Bottle recalibrated!");
+            } catch (error) {
+              Alert.alert("Error", "Tare failed.");
+            }
           },
         },
       ]
@@ -200,42 +217,42 @@ export default function SettingsPage() {
     );
   };
 
-  const handlePowerOff = () => {
-    Alert.alert(
-      "Power Off",
-      "Are you sure you want to power off the device? You'll need to physically turn it back on.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Power Off",
-          style: "destructive",
-          onPress: () => {
-            // TODO: Send power off command to hardware
-            console.log("Powering off bottle...");
-            Alert.alert("Device Powered Off", "Turn on the physical device to reconnect.");
-          },
-        },
-      ]
-    );
-  };
+  // const handlePowerOff = () => {
+  //   Alert.alert(
+  //     "Power Off",
+  //     "Are you sure you want to power off the device? You'll need to physically turn it back on.",
+  //     [
+  //       { text: "Cancel", style: "cancel" },
+  //       {
+  //         text: "Power Off",
+  //         style: "destructive",
+  //         onPress: () => {
+  //           // TODO: Send power off command to hardware
+  //           console.log("Powering off bottle...");
+  //           Alert.alert("Device Powered Off", "Turn on the physical device to reconnect.");
+  //         },
+  //       },
+  //     ]
+  //   );
+  // };
 
   const getBatteryIcon = () => {
-    if (batteryLevel === null) return "🔋";
+    if (battery === null) return "🔋";
     
-    if (isCharging) return "⚡";
+    //if (isCharging) return "⚡";
     
-    if (batteryLevel > 0.7) return "🔋";
-    if (batteryLevel > 0.3) return "🔋";
-    if (batteryLevel > 0.1) return "🪫";
+    if (battery > 70) return "🔋";
+    if (battery > 30) return "🔋";
+    if (battery > 10) return "🪫";
     return "🪫";
   };
 
   const getBatteryColor = () => {
-    if (!batteryModuleAvailable) return "#999999";
-    if (batteryLevel === null) return "#90E0EF";
-    if (isCharging) return "#00D084";
-    if (batteryLevel > 0.3) return "#00D084";
-    if (batteryLevel > 0.1) return "#FFA500";
+    //if (!batteryModuleAvailable) return "#999999";
+    if (battery === null) return "#90E0EF";
+    //if (isCharging) return "#00D084";
+    if (battery > 0.3) return "#00D084";
+    if (battery > 0.1) return "#FFA500";
     return "#FF0000";
   };
 
@@ -261,15 +278,13 @@ export default function SettingsPage() {
               <View style={styles.batteryInfo}>
                 <Text style={styles.batteryLabel}>Water Bottle Battery</Text>
                 <Text style={[styles.batteryLevel, { color: getBatteryColor() }]}>
-                  {!batteryModuleAvailable
-                    ? "Unavailable"
-                    : batteryLevel !== null
-                    ? `${Math.round(batteryLevel * 100)}%` 
+                  {battery !== null 
+                    ? `${battery}%` 
                     : "Checking..."}
                 </Text>
-                {isCharging && (
+                {/* {isCharging && (
                   <Text style={styles.chargingText}>Charging</Text>
-                )}
+                )} */}
               </View>
             </View>
           </View>
