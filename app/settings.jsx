@@ -33,6 +33,7 @@ export default function SettingsPage() {
   const { 
     water, 
     connectedDevice, 
+    connectedDeviceRef ,
     allDevices, 
     color, 
     currWt,
@@ -189,7 +190,7 @@ export default function SettingsPage() {
             console.log("Taring bottle...");
             // TODO: Send tare command to hardware
             try {
-              await tare(connectedDevice);
+              await tare(connectedDeviceRef.current);
               Alert.alert("Success", "Bottle recalibrated!");
             } catch (error) {
               Alert.alert("Error", "Tare failed.");
