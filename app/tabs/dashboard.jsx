@@ -1,27 +1,64 @@
-import React, { useState } from "react";
-import { StyleSheet, Text, View, TouchableOpacity } from "react-native";
+import React, { useState, useEffect } from "react";
+import { StyleSheet, Text, View, TouchableOpacity, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Circle } from "react-native-svg";
 import { BarChart } from "react-native-gifted-charts";
 import { Animated } from "react-native";
+import { getBottleData } from "../../lib/bottleApi";
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 export default function Dashboard() {
   const [selected, setSelected] = useState("Week");
+  const [loading, setLoading] = useState(true);
 
   const [data, setData] = useState({
-    today: { amount: 1.8, goal: 3 },
-    week: { amount: 17.9, goal: 21 },
-    weekDays: [3.0, 2.2, 3.3, 3.0, 3.0, 2.2, 1.8],
-    monthDays: [17.9, 18.2, 19.0, 16.5],
-    monthDaysDaily: [
-      1.5, 2.8, 3.0, 2.7, 3.3, 2.9, 3.0, 2.2, 3.1, 3.0, 2.6, 2.9, 3.2, 3.0, 2.5,
-      2.7, 3.0, 3.1, 2.8, 3.0, 3.2, 2.9, 2.6, 3.0, 2.7, 3.0, 3.1, 2.8, 3.0, 2.5,
-    ],
-    yearData: [70, 75, 80, 78, 85, 88, 90, 82, 76, 70, 68, 72],
-    streak: 3,
+    today: { amount: 0, goal: 2 },
+    week: { amount: 0, goal: 14 },
+    weekDays: [0, 0, 0, 0, 0, 0, 0],
+    monthDays: [0, 0, 0, 0],
+    monthDaysDaily: Array(30).fill(0),
+    yearData: Array(12).fill(0),
+    streak: 0,
   });
+
+  useEffect(() => {
+    const fetchBottleData = async () => {
+      setLoading(true);
+      try {
+        const bottleData = await getBottleData();
+        if (bottleData) {
+          const dailyGoal = bottleData.dailyGoal || 2000;
+          const dailyGoalInLiters = dailyGoal / 1000;
+          
+          setData({
+            today: {
+              amount: bottleData.waterDrankDaily ? bottleData.waterDrankDaily / 1000 : 0,
+              goal: dailyGoalInLiters,
+            },
+            week: {
+              amount: bottleData.waterDrankMonthly ? bottleData.waterDrankMonthly / 1000 / 4 : 0,
+              goal: dailyGoalInLiters * 7,
+            },
+            weekDays: bottleData.weekDays || [0, 0, 0, 0, 0, 0, 0],
+            monthDays: bottleData.monthWeeks || [0, 0, 0, 0],
+            monthDaysDaily: bottleData.monthDaysDaily || Array(30).fill(0),
+            yearData: bottleData.yearData || Array(12).fill(0),
+            streak: bottleData.goalsReachedConsistently || 0,
+          });
+        }
+      } catch (error) {
+        console.error("Failed to load bottle data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBottleData();
+    // Refresh every 30 seconds
+    const interval = setInterval(fetchBottleData, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   const todayProgress =
     data.today.goal > 0 ? data.today.amount / data.today.goal : 0;
@@ -122,7 +159,12 @@ const weekDays = monthDaysDaily.slice(startOfWeek, todayIdx + 1);
   
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.card}>
+      {loading ? (
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+          <ActivityIndicator size="large" color="#48CAE4" />
+        </View>
+      ) : (
+        <View style={styles.card}>
         <View style={styles.cardInner}>
           <View style={styles.topRow}>
             <View style={styles.statCol}>
@@ -442,6 +484,7 @@ const weekDays = monthDaysDaily.slice(startOfWeek, todayIdx + 1);
           )}
         </View>
       </View>
+      )}
     </SafeAreaView>
   );
 }
