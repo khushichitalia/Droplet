@@ -632,13 +632,14 @@ const styles = StyleSheet.create({
   deviceItem: {
     backgroundColor: "#CAF0F8",
     borderRadius: 12,
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     paddingVertical: 12,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     borderWidth: 2,
     borderColor: "#48CAE4",
+    marginHorizontal: 12,
   },
   deviceItemConnected: {
     borderColor: "#00D084",
