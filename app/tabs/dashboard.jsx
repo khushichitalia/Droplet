@@ -66,7 +66,7 @@ export default function Dashboard() {
     data.week.goal > 0 ? data.week.amount / data.week.goal : 0;
   const todayText = `${Math.round(todayProgress * 100)}%`;
   const weekText = `${Math.round(weekProgress * 100)}%`;
-  const todayLabel = `${data.today.amount}/${data.today.goal} L`;
+  const todayLabel = `${data.today.amount.toFixed(2)}/${data.today.goal} L`;
   const weekLabel = `${data.week.amount}/${data.week.goal} L`;
   // Compute streak dynamically from monthDaysDaily using perDayGoal
   const today = new Date();
