@@ -106,7 +106,7 @@ export default function HomePage() {
       <View style={styles.welcomeBox}>
         <Text style={styles.welcomeTitle}>{greeting}</Text>
         <Text style={styles.welcomeSubtitle}>Today you drank</Text>
-        <Text style={styles.amount}>{currentAmount} oz of water!</Text>
+        {/* <Text style={styles.amount}>{currentAmount} oz of water!</Text> */}
       </View>
 
       <View style={styles.dropletContainer}>

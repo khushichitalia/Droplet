@@ -251,9 +251,8 @@ export default function SettingsPage() {
 
   const getBatteryColor = () => {
     if (battery === null || battery === 0) return "#90E0EF";
-    const batteryPercent = typeof battery === 'number' ? battery * 100 : battery;
-    if (batteryPercent > 30) return "#00D084";
-    if (batteryPercent > 10) return "#FFA500";
+    if (battery > 30) return "#00D084";
+    if (battery > 10) return "#FFA500";
     return "#FF0000";
   };
 
@@ -280,7 +279,7 @@ export default function SettingsPage() {
                 <Text style={styles.batteryLabel}>Water Bottle Battery</Text>
                 <Text style={[styles.batteryLevel, { color: getBatteryColor() }]}>
                   {battery !== null 
-                    ? `${Math.round(battery * 100)}%` 
+                    ? `${Math.round(battery)}%` 
                     : "Checking..."}
                 </Text>
                 {/* {isCharging && (
