@@ -109,6 +109,19 @@ export default function HomePage() {
         <Text style={styles.amount}>{currentAmount} oz of water!</Text>
       </View>
 
+      {/* Battery Indicator */}
+      <View style={styles.batteryContainer}>
+        <View style={[styles.batteryBarContainer, { 
+          borderColor: battery > 20 ? '#4CAF50' : '#FF5252'
+        }]}>
+          <View style={[styles.batteryBar, { 
+            backgroundColor: battery > 20 ? '#4CAF50' : '#FF5252',
+            width: `${Math.round(battery * 100)}%` 
+          }]} />
+        </View>
+        <Text style={styles.batteryText}>Bottle Battery: {Math.round(battery * 100)}%</Text>
+      </View>
+
       <View style={styles.dropletContainer}>
         <Svg width="280" height="360" viewBox="0 0 280 360">
           <Defs>
@@ -230,6 +243,33 @@ const styles = StyleSheet.create({
     color: "black",
     fontSize: 24,
     fontWeight: "500",
+  },
+  batteryContainer: {
+    marginTop: 20,
+    marginBottom: 20,
+    width: 280,
+    alignItems: "center",
+  },
+  batteryBarContainer: {
+    width: "100%",
+    height: 24,
+    backgroundColor: "#ffffff",
+    borderRadius: 12,
+    overflow: "hidden",
+    marginBottom: 8,
+    borderWidth: 2,
+  },
+  batteryBar: {
+    height: "100%",
+    borderRadius: 10,
+  },
+  batteryText: {
+    color: "#ffffff",
+    fontWeight: "600",
+    fontSize: 14,
+    textShadowColor: "rgba(0, 0, 0, 0.5)",
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
   },
   dropletContainer: {
     position: "relative",

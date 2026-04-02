@@ -4,6 +4,7 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 
 const fountainRoutes = require("./routes/fountains");
+const bottleRoutes = require("./routes/bottles");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -12,6 +13,7 @@ app.use(cors());
 app.use(express.json());
 
 app.use("/api/fountains", fountainRoutes);
+app.use("/api/bottles", bottleRoutes);
 app.get("/api/health", (_req, res) => res.json({ status: "ok" }));
 
 mongoose

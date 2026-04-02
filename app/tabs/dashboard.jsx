@@ -1,14 +1,21 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { StyleSheet, Text, View, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Circle } from "react-native-svg";
 import { BarChart } from "react-native-gifted-charts";
 import { Animated } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { getWaterIntake } from "../../lib/api";
+import { useBLEContext } from "../../lib/BLEContext";
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 export default function Dashboard() {
   const [selected, setSelected] = useState("Week");
+  const [userId, setUserId] = useState(null);
+
+  // Get battery from BLE context
+  const { battery } = useBLEContext();
 
   const [data, setData] = useState({
     today: { amount: 1.8, goal: 3 },
@@ -22,6 +29,40 @@ export default function Dashboard() {
     yearData: [70, 75, 80, 78, 85, 88, 90, 82, 76, 70, 68, 72],
     streak: 3,
   });
+
+  // Fetch user ID and water intake data on component mount
+  useEffect(() => {
+    const fetchUserAndWaterData = async () => {
+      try {
+        // Get user ID from AsyncStorage
+        const storedUserId = await AsyncStorage.getItem("userId");
+        if (!storedUserId) return;
+
+        setUserId(storedUserId);
+
+        // Fetch water intake data from backend using API helper
+        const bottleData = await getWaterIntake(storedUserId);
+
+        // Update dashboard data with real water intake
+        setData((prevData) => ({
+          ...prevData,
+          today: {
+            amount: (bottleData.waterDrankDaily || 0) / 1000, // Convert ml to L
+            goal: (bottleData.dailyGoal || 2000) / 1000,
+          },
+          // You can add logic here to populate week/month/year data from your backend
+        }));
+      } catch (error) {
+        console.error("Error fetching water data:", error);
+      }
+    };
+
+    fetchUserAndWaterData();
+
+    // Fetch data every 5 seconds to show real-time updates
+    const interval = setInterval(fetchUserAndWaterData, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   const todayProgress =
     data.today.goal > 0 ? data.today.amount / data.today.goal : 0;
@@ -120,10 +161,22 @@ const weekDays = monthDaysDaily.slice(startOfWeek, todayIdx + 1);
   const selectedDayValue = monthDaysDaily[selectedDay];
   const hasData = typeof selectedDayValue === "number";
   
+  // Format battery percentage for display
+  const batteryPercentage = Math.round((battery || 0) * 100);
+  
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.card}>
         <View style={styles.cardInner}>
+          {/* Battery Indicator */}
+          <View style={styles.batteryIndicator}>
+            <View style={[styles.batteryBar, { 
+              backgroundColor: batteryPercentage > 20 ? '#4CAF50' : '#FF5252',
+              width: `${batteryPercentage}%` 
+            }]} />
+          </View>
+          <Text style={styles.batteryText}>Bottle Battery: {batteryPercentage}%</Text>
+          
           <View style={styles.topRow}>
             <View style={styles.statCol}>
               <View style={styles.titleWrap}>
@@ -548,6 +601,28 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "#B9EEF6",
     padding: 16,
+  },
+  batteryIndicator: {
+    width: "100%",
+    height: 20,
+    backgroundColor: "#D0E8F2",
+    borderRadius: 10,
+    overflow: "hidden",
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: "#8ED6F9",
+  },
+  batteryBar: {
+    height: "100%",
+    borderRadius: 9,
+    transition: "width 0.3s ease",
+  },
+  batteryText: {
+    color: "#073B66",
+    fontWeight: "600",
+    fontSize: 14,
+    marginBottom: 12,
+    textAlign: "center",
   },
   topRow: {
     flexDirection: "row",
