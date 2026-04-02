@@ -31,8 +31,8 @@ export default function HomePage() {
     connectToDevice 
   } = useBLEContext();
 
-  const currentAmount = currWt;
-  const goalAmount = 80;
+  const currentAmount = water;
+  const goalAmount = 80; // un hard code this 
   const progressPercent = Math.min((currentAmount / goalAmount) * 100, 100);
 
   const [name, setName] = useState("");
@@ -106,7 +106,7 @@ export default function HomePage() {
       <View style={styles.welcomeBox}>
         <Text style={styles.welcomeTitle}>{greeting}</Text>
         <Text style={styles.welcomeSubtitle}>Today you drank</Text>
-        <Text style={styles.amount}>{currentAmount} oz of water!</Text>
+        <Text style={styles.amount}>{currentAmount.toFixed(2)} mL of water!</Text>
       </View>
 
       <View style={styles.dropletContainer}>
@@ -159,7 +159,7 @@ export default function HomePage() {
           <Text style={styles.dropPercentText}>
             {Math.round(progressPercent)}%
           </Text>
-          <Text style={styles.dropGoalText}>Goal: {goalAmount} oz</Text>
+          <Text style={styles.dropGoalText}>Goal: {goalAmount} mL</Text>
         </View>
       </View>
 

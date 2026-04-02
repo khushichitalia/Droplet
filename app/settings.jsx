@@ -281,7 +281,7 @@ export default function SettingsPage() {
                 <Text style={styles.batteryLabel}>Water Bottle Battery</Text>
                 <Text style={[styles.batteryLevel, { color: getBatteryColor() }]}>
                   {battery !== null 
-                    ? `${battery}%` 
+                    ? `${Math.round(battery)}%` 
                     : "Checking..."}
                 </Text>
                 {/* {isCharging && (
