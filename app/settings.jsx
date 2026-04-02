@@ -250,11 +250,10 @@ export default function SettingsPage() {
   };
 
   const getBatteryColor = () => {
-    //if (!batteryModuleAvailable) return "#999999";
-    if (battery === null) return "#90E0EF";
-    //if (isCharging) return "#00D084";
-    if (battery > 0.3) return "#00D084";
-    if (battery > 0.1) return "#FFA500";
+    if (battery === null || battery === 0) return "#90E0EF";
+    const batteryPercent = typeof battery === 'number' ? battery * 100 : battery;
+    if (batteryPercent > 30) return "#00D084";
+    if (batteryPercent > 10) return "#FFA500";
     return "#FF0000";
   };
 
