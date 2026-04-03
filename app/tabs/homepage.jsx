@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Image,
   View,
@@ -13,11 +13,21 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Path, Rect, Defs, ClipPath, G } from "react-native-svg";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import { useBLEContext } from "../../lib/BLEContext";
 
 const AnimatedRect = Animated.createAnimatedComponent(Rect);
 const NAME_STORAGE_KEY = "@droplet/display-name";
+const GOAL_STORAGE_KEY = "@droplet/daily-goal";
+const GOAL_UNIT_STORAGE_KEY = "@droplet/daily-goal-unit";
+
+const CONVERSION_FACTORS = {
+  ml: 1,
+  oz: 0.033814,
+  L: 0.001,
+  gal: 0.000264172,
+  cups: 0.00422675,
+};
 
 export default function HomePage() {
   const { 
@@ -31,9 +41,13 @@ export default function HomePage() {
     connectToDevice 
   } = useBLEContext();
 
-  const currentAmount = water;
-  const goalAmount = 80; // un hard code this 
-  const progressPercent = Math.min((currentAmount / goalAmount) * 100, 100);
+  const rawWater = water; // in grams
+  const [goalAmount, setGoalAmount] = useState(80);
+  const [goalUnit, setGoalUnit] = useState("oz");
+
+  const factor = CONVERSION_FACTORS[goalUnit] || 1;
+  const currentAmountInUnit = rawWater * factor;
+  const progressPercent = Math.min((currentAmountInUnit / goalAmount) * 100, 100);
 
   const [name, setName] = useState("");
   const [showNameModal, setShowNameModal] = useState(false);
@@ -41,7 +55,6 @@ export default function HomePage() {
   const fillAnimation = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    fillAnimation.setValue(0);
     Animated.timing(fillAnimation, {
       toValue: progressPercent,
       duration: 2500,
@@ -49,23 +62,35 @@ export default function HomePage() {
     }).start();
   }, [fillAnimation, progressPercent]);
 
-  useEffect(() => {
-    const loadSavedName = async () => {
-      try {
-        const savedName = await AsyncStorage.getItem(NAME_STORAGE_KEY);
-        if (savedName && savedName.trim()) {
-          setName(savedName.trim());
-          setShowNameModal(false);
-          return;
+  useFocusEffect(
+    useCallback(() => {
+      const loadSavedData = async () => {
+        try {
+          const savedName = await AsyncStorage.getItem(NAME_STORAGE_KEY);
+          if (savedName && savedName.trim()) {
+            setName(savedName.trim());
+            setShowNameModal(false);
+          } else {
+            setShowNameModal(true);
+          }
+        } catch (error) {
+          console.log("Failed to load name", error);
+          setShowNameModal(true);
         }
-      } catch (error) {
-        console.log("Failed to load name", error);
-      }
-      setShowNameModal(true);
-    };
 
-    loadSavedName();
-  }, []);
+        try {
+          const savedGoal = await AsyncStorage.getItem(GOAL_STORAGE_KEY);
+          const savedUnit = await AsyncStorage.getItem(GOAL_UNIT_STORAGE_KEY);
+          if (savedGoal) setGoalAmount(parseFloat(savedGoal));
+          if (savedUnit) setGoalUnit(savedUnit);
+        } catch (error) {
+          console.log("Failed to load goal settings", error);
+        }
+      };
+
+      loadSavedData();
+    }, [])
+  );
 
   const saveName = async () => {
     const trimmedName = name.trim();
@@ -87,7 +112,7 @@ export default function HomePage() {
 
   const fillY = fillAnimation.interpolate({
     inputRange: [0, 100],
-    outputRange: [360, 0],
+    outputRange: [338, 20],
   });
 
   return (
@@ -106,7 +131,7 @@ export default function HomePage() {
       <View style={styles.welcomeBox}>
         <Text style={styles.welcomeTitle}>{greeting}</Text>
         <Text style={styles.welcomeSubtitle}>Today you drank</Text>
-        <Text style={styles.amount}>{currentAmount.toFixed(2)} mL of water!</Text>
+        <Text style={styles.amount}>{currentAmountInUnit.toFixed(2)} {goalUnit} of water!</Text>
       </View>
 
       <View style={styles.dropletContainer}>
@@ -159,7 +184,7 @@ export default function HomePage() {
           <Text style={styles.dropPercentText}>
             {Math.round(progressPercent)}%
           </Text>
-          <Text style={styles.dropGoalText}>Goal: {goalAmount} mL</Text>
+          <Text style={styles.dropGoalText}>Goal: {goalAmount} {goalUnit}</Text>
         </View>
       </View>
 
