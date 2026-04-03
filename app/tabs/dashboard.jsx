@@ -43,19 +43,22 @@ export default function Dashboard() {
         try {
           const savedGoal = await AsyncStorage.getItem(GOAL_STORAGE_KEY);
           const savedUnit = await AsyncStorage.getItem(GOAL_UNIT_STORAGE_KEY);
-          if (savedGoal) setUserGoal(parseFloat(savedGoal));
-          if (savedUnit) setUserUnit(savedUnit);
+          if (savedGoal && parseFloat(savedGoal) !== userGoal) {
+            setUserGoal(parseFloat(savedGoal));
+          }
+          if (savedUnit && savedUnit !== userUnit) {
+            setUserUnit(savedUnit);
+          }
         } catch (error) {
           console.error("Failed to load settings", error);
         }
       };
       loadSettings();
-    }, [])
+    }, [userGoal, userUnit])
   );
 
   useEffect(() => {
     const fetchBottleData = async () => {
-      setLoading(true);
       try {
         const bottleData = await getBottleData();
         if (bottleData) {
@@ -76,7 +79,7 @@ export default function Dashboard() {
             weekDays: (bottleData.weekDays || [0, 0, 0, 0, 0, 0, 0]).map(convert),
             monthDays: (bottleData.monthWeeks || [0, 0, 0, 0]).map(convert),
             monthDaysDaily: (bottleData.monthDaysDaily || Array(30).fill(0)).map(convert),
-            yearData: (bottleData.yearData || Array(12).fill(0)).map(val => (val / 100)), // Year data seems to be percentage already in the original code, but let's check
+            yearData: (bottleData.yearData || Array(12).fill(0)).map(val => (val / 100)),
             streak: bottleData.goalsReachedConsistently || 0,
           });
         }
@@ -321,7 +324,7 @@ const weekDays = monthDaysDaily.slice(startOfWeek, todayIdx + 1);
               <Text style={styles.avgText}>
                 AVG: <Text style={styles.avgNum}>{activeAvgText}</Text>
               </Text>
-              <View style={{ alignItems: "center", overflow: "hidden" }}>
+              <View style={{ alignItems: "center" }}>
                 <BarChart
                 key={chartKey}
                 data={weekDays.map((val, i) => ({
@@ -340,6 +343,8 @@ const weekDays = monthDaysDaily.slice(startOfWeek, todayIdx + 1);
 
                 noOfSections={4}
                 maxValue={Math.max(perDayGoal, ...weekDays, 3)}
+                showFractionalValues={false}
+                yAxisLabelWidth={65}
                 yAxisThickness={0}
                 xAxisThickness={1}
                 xAxisColor="#B9EEF6"
