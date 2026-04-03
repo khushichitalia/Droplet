@@ -55,7 +55,6 @@ export default function HomePage() {
   const fillAnimation = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    fillAnimation.setValue(0);
     Animated.timing(fillAnimation, {
       toValue: progressPercent,
       duration: 2500,
@@ -113,7 +112,7 @@ export default function HomePage() {
 
   const fillY = fillAnimation.interpolate({
     inputRange: [0, 100],
-    outputRange: [360, 0],
+    outputRange: [338, 20],
   });
 
   return (

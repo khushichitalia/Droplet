@@ -1,16 +1,31 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { StyleSheet, Text, View, TouchableOpacity, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Circle } from "react-native-svg";
 import { BarChart } from "react-native-gifted-charts";
 import { Animated } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useFocusEffect } from "expo-router";
 import { getBottleData } from "../../lib/bottleApi";
+
+const GOAL_STORAGE_KEY = "@droplet/daily-goal";
+const GOAL_UNIT_STORAGE_KEY = "@droplet/daily-goal-unit";
+
+const CONVERSION_FACTORS = {
+  ml: 1,
+  oz: 0.033814,
+  L: 0.001,
+  gal: 0.000264172,
+  cups: 0.00422675,
+};
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 export default function Dashboard() {
   const [selected, setSelected] = useState("Week");
   const [loading, setLoading] = useState(true);
+  const [userUnit, setUserUnit] = useState("oz");
+  const [userGoal, setUserGoal] = useState(80);
 
   const [data, setData] = useState({
     today: { amount: 0, goal: 2 },
@@ -22,28 +37,46 @@ export default function Dashboard() {
     streak: 0,
   });
 
+  useFocusEffect(
+    useCallback(() => {
+      const loadSettings = async () => {
+        try {
+          const savedGoal = await AsyncStorage.getItem(GOAL_STORAGE_KEY);
+          const savedUnit = await AsyncStorage.getItem(GOAL_UNIT_STORAGE_KEY);
+          if (savedGoal) setUserGoal(parseFloat(savedGoal));
+          if (savedUnit) setUserUnit(savedUnit);
+        } catch (error) {
+          console.error("Failed to load settings", error);
+        }
+      };
+      loadSettings();
+    }, [])
+  );
+
   useEffect(() => {
     const fetchBottleData = async () => {
       setLoading(true);
       try {
         const bottleData = await getBottleData();
         if (bottleData) {
-          const dailyGoal = bottleData.dailyGoal || 2000;
-          const dailyGoalInLiters = dailyGoal / 1000;
+          const factor = CONVERSION_FACTORS[userUnit] || 1;
+          const dailyGoal = userGoal; // use the goal from settings
+          
+          const convert = (val) => (val ? val * factor : 0);
           
           setData({
             today: {
-              amount: bottleData.waterDrankDaily ? bottleData.waterDrankDaily / 1000 : 0,
-              goal: dailyGoalInLiters,
+              amount: convert(bottleData.waterDrankDaily),
+              goal: dailyGoal,
             },
             week: {
-              amount: bottleData.waterDrankMonthly ? bottleData.waterDrankMonthly / 1000 / 4 : 0,
-              goal: dailyGoalInLiters * 7,
+              amount: convert(bottleData.waterDrankMonthly ? bottleData.waterDrankMonthly / 4 : 0),
+              goal: dailyGoal * 7,
             },
-            weekDays: bottleData.weekDays || [0, 0, 0, 0, 0, 0, 0],
-            monthDays: bottleData.monthWeeks || [0, 0, 0, 0],
-            monthDaysDaily: bottleData.monthDaysDaily || Array(30).fill(0),
-            yearData: bottleData.yearData || Array(12).fill(0),
+            weekDays: (bottleData.weekDays || [0, 0, 0, 0, 0, 0, 0]).map(convert),
+            monthDays: (bottleData.monthWeeks || [0, 0, 0, 0]).map(convert),
+            monthDaysDaily: (bottleData.monthDaysDaily || Array(30).fill(0)).map(convert),
+            yearData: (bottleData.yearData || Array(12).fill(0)).map(val => (val / 100)), // Year data seems to be percentage already in the original code, but let's check
             streak: bottleData.goalsReachedConsistently || 0,
           });
         }
@@ -58,7 +91,7 @@ export default function Dashboard() {
     // Refresh every 30 seconds
     const interval = setInterval(fetchBottleData, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [userUnit, userGoal]);
 
   const todayProgress =
     data.today.goal > 0 ? data.today.amount / data.today.goal : 0;
@@ -66,8 +99,8 @@ export default function Dashboard() {
     data.week.goal > 0 ? data.week.amount / data.week.goal : 0;
   const todayText = `${Math.round(todayProgress * 100)}%`;
   const weekText = `${Math.round(weekProgress * 100)}%`;
-  const todayLabel = `${data.today.amount.toFixed(2)}/${data.today.goal} L`;
-  const weekLabel = `${data.week.amount}/${data.week.goal} L`;
+  const todayLabel = `${data.today.amount.toFixed(2)}/${data.today.goal} ${userUnit}`;
+  const weekLabel = `${data.week.amount.toFixed(1)}/${data.week.goal.toFixed(1)} ${userUnit}`;
   // Compute streak dynamically from monthDaysDaily using perDayGoal
   const today = new Date();
   const todayIdx = today.getDate() - 1;
@@ -96,7 +129,7 @@ const weekDays = monthDaysDaily.slice(startOfWeek, todayIdx + 1);
   const weekAvg = weekDays.length
     ? weekDays.reduce((s, v) => s + v, 0) / weekDays.length
     : 0;
-  const weekAvgText = `${weekAvg.toFixed(1)}L/Day`;
+  const weekAvgText = `${weekAvg.toFixed(1)}${userUnit}/Day`;
   const monthDays = data.monthDays || [];
   const yearData = data.yearData || [];
 
@@ -133,7 +166,7 @@ const weekDays = monthDaysDaily.slice(startOfWeek, todayIdx + 1);
   const activeAvg = activeData.length
     ? activeData.reduce((s, v) => s + v, 0) / activeData.length
     : 0;
-  const activeAvgText = `${activeAvg.toFixed(1)}${selected === "Week" ? "L/Day" : selected === "Month" ? "L/Week" : ""}`;
+  const activeAvgText = `${activeAvg.toFixed(1)}${selected === "Week" ? `${userUnit}/Day` : selected === "Month" ? `${userUnit}/Week` : ""}`;
 
   const barsAreaTop = 50;
   const barsAreaHeight = 180;
@@ -331,7 +364,7 @@ const weekDays = monthDaysDaily.slice(startOfWeek, todayIdx + 1);
                 rulesThickness={1}
                 hideRules={false}
 
-                yAxisLabelSuffix=" L"
+                yAxisLabelSuffix={` ${userUnit}`}
                 initialSpacing={10}
                 endSpacing={10}
               />
@@ -417,10 +450,10 @@ const weekDays = monthDaysDaily.slice(startOfWeek, todayIdx + 1);
 
                   <View style={styles.dayDetails}>
                     <Text style={styles.detailText}>
-                      You Drank {selectedDayValue} L.
+                      You Drank {selectedDayValue.toFixed(2)} {userUnit}.
                     </Text>
                     <Text style={styles.detailText}>
-                      Your Goal was {data.today.goal} L.
+                      Your Goal was {data.today.goal} {userUnit}.
                     </Text>
                   </View>
 
@@ -431,7 +464,7 @@ const weekDays = monthDaysDaily.slice(startOfWeek, todayIdx + 1);
                       </Text>
                     </View>
                     <Text style={styles.avgLabel}>AVG</Text>
-                    <Text style={styles.avgUnit}>L/Day</Text>
+                    <Text style={styles.avgUnit}>{userUnit}/Day</Text>
                   </View>
                 </View>
               )}
