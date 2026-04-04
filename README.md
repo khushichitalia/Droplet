@@ -29,9 +29,14 @@ EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID=...
 
 ### Setup
 
-1. Copy `.env.example` to `.env` in the project root
+1. Create a `.env` in the project root
 2. Add your Firebase credentials (see above)
-3. Set the API URL for the backend
+3. Set up the backend by creating a `.env` file in the `server/` directory:
+   ```
+   MONGO_URI=your_mongodb_connection_string
+   PORT=3001
+   ```
+   See `.env.example` files in the project root and `server/` directory for reference templates
 
 ### Running the App
 
